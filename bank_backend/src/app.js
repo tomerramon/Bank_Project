@@ -2,9 +2,9 @@ import express, { json } from 'express';
 
 const app = express();
 
-import authRoutes from "./routes/auth.routes.js";
-import userRoutes from "./routes/user.routes.js";
-import transactionRoutes from "./routes/transaction.routes.js";
+import authRoutes from "./routes/auth.route.js";
+import userRoutes from "./routes/user.route.js";
+import transactionRoutes from "./routes/transaction.route.js";
 
 
 // Middleware:

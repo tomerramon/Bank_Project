@@ -10,5 +10,3 @@ export function GenerateToken(user)
         { expiresIn: "1h" }
     );
 }
-
-// export default { GenerateToken };

@@ -1,4 +1,3 @@
-import { createRef } from "react";
 import { users, transactions } from "../config/local_users.config.js";
 
 export function CreateTransaction(fromUserId, toUserId, amount) {
