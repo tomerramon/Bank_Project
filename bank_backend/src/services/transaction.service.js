@@ -60,3 +60,47 @@ export function GetTransactionsByUserEmail(email) {
     }
     return GetTransactionsByUserId(user.id);
 }
+
+/**
+
+const transferMoney = async (fromUserId, toEmail, amount) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const receiver = await User.findOne({ email: toEmail }).session(session);
+    if (!receiver) throw new Error('Receiver not found');
+
+    const sender = await User.findOneAndUpdate(
+      { _id: fromUserId, balance: { $gte: amount } }, // prevents overdraft
+      { $inc: { balance: -amount } },
+      { session, new: true }
+    );
+
+    if (!sender) throw new Error('Insufficient balance');
+
+    await User.findByIdAndUpdate(
+      receiver._id,
+      { $inc: { balance: amount } },
+      { session }
+    );
+
+    await Transaction.create(
+      [{
+        fromUserId,
+        toUserId: receiver._id,
+        amount
+      }],
+      { session }
+    );
+
+    await session.commitTransaction();
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
+  }
+};
+
+*/
