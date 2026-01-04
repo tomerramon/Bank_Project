@@ -1,7 +1,2 @@
-const users = [];
-const transactions = [];
-
-module.exports = { 
-    users,
-    transactions
-};
+export const users = [];
+export const transactions = [];

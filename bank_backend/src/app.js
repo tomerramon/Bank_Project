@@ -1,18 +1,18 @@
-const express = require('express');
+import express, { json } from 'express';
 
 const app = express();
 
-const authRoutes = require("./routes/auth.routes");
-const userRoutes = require("./routes/user.routes");
-const transactionRoutes = require("./routes/transaction.routes");
+import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
+import transactionRoutes from "./routes/transaction.routes.js";
 
 
-// Middleware
-app.use(express.json());
+// Middleware:
+app.use(json());
 
 // Main routes:
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/transactions", transactionRoutes);
 
-module.exports = app;
+export default app;

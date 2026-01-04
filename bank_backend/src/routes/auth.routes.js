@@ -1,30 +1,62 @@
-const express = require('express');
+import { Router } from 'express';
+import { CreateUser } from "../services/user.services.js";
+import { AuthenticateUser } from "../services/auth.services.js";
 
-const router = express.Router();
+const router = Router();
 
 router.post("/signup", (req,res) => {
-    res.json({
-        msg:"Sign Up endpoint (stub)"
-    });
+    try {
+        const user = CreateUser(req.body.email, req.body.password);
+        res.status(201).json({
+            msg: "User created successfully",
+            user: user
+        });
+    } 
+    catch (error) {
+        res.status(400).json({
+            msg: "Failed to create user",
+            error: error.message
+        });
+    }
 });
 
-router.post("/login", (req,res) => {
-    res.json({
-        msg:"Login endpoint (stub)"
-    });
+router.post("/login", async(req,res) => {
+    try {
+        const authData = await AuthenticateUser(req.body.email, req.body.password);
+        res.status(200).json({
+            msg: "User authenticated successfully",
+            authData: authData
+        });
+    } 
+    catch (error) {
+        res.status(401).json({
+            msg: "Authentication failed",
+            error: error.message
+        });
+    }
 });
 
 router.post("/logout", (req,res) => {
-    res.json({
-        msg:"Logout endpoint (stub)"
+    // For stateless JWT, logout can be handled on client side by deleting the token.
+    res.status(200).json({
+        msg: "User logged out successfully (stub)"
     });
 });
 
 router.post("/verify-otp", (req,res) => {
-    res.json({
-        msg:"Verify-Otp endpoint (stub)"
-    });
+    try {
+        // OTP verification logic would go here
+        res.status(200).json({
+            msg: "OTP verified successfully (stub)"
+        });
+    } 
+    catch (error) {
+        res.status(400).json({
+            msg: "OTP verification failed (stub)",
+            error: error.message
+        });
+    }
 });
 
 
-module.exports = router;
+export default router;
