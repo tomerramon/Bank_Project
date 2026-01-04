@@ -6,19 +6,20 @@ const transactionSchema = new mongoose.Schema({
         auto: true,
         unique: true
     },
-    fromUser: {
+    fromUserId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
-    toUser: {
+    toUserId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
     amount: {
         type: Number,
-        required: true
+        required: true,
+        min: 0.01
     },
     type: {
         type: String,
