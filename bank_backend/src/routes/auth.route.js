@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { CreateUser } from "../services/user.services.js";
-import { AuthenticateUser } from "../services/auth.services.js";
+import { CreateUser } from "../services/user.service.js";
+import { AuthenticateUser } from "../services/auth.service.js";
 
 const router = Router();
 

@@ -1,6 +1,6 @@
 import { compareSync } from "bcryptjs";
-import { FindUserByEmail } from "./user.services.js";
-import { GenerateToken } from "./jwt.services.js";
+import { FindUserByEmail } from "./user.service.js";
+import { GenerateToken } from "./jwt.service.js";
 
 export async function AuthenticateUser(email, password) {
     const user = FindUserByEmail(email);
