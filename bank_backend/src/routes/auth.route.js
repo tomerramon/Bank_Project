@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { CreateUser } from "../services/user.service.js";
-import { AuthenticateUser } from "../services/auth.service.js";
-
+import { loginController } from "../controllers/auth.controller.js";
 const router = Router();
 
 router.post("/signup", (req,res) => {
@@ -20,21 +19,8 @@ router.post("/signup", (req,res) => {
     }
 });
 
-router.post("/login", async(req,res) => {
-    try {
-        const authData = await AuthenticateUser(req.body.email, req.body.password);
-        res.status(200).json({
-            msg: "User authenticated successfully",
-            authData: authData
-        });
-    } 
-    catch (error) {
-        res.status(401).json({
-            msg: "Authentication failed",
-            error: error.message
-        });
-    }
-});
+router.post("/login", loginController);
+
 
 router.post("/logout", (req,res) => {
     // For stateless JWT, logout can be handled on client side by deleting the token.

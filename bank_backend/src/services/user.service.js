@@ -1,19 +1,13 @@
-import { hashSync } from "bcryptjs";
-import { users } from "../config/local_users.config.js";
+import bcrypt, { hashSync } from "bcryptjs";
+// import { users } from "../config/local_users.config.js";
+import Users from '../models/user.model.js';
 
 export function FindUserByEmail(email) {
-    return users.find(user => user.email === email);
+    return Users.find(u => u.email === email);
 }
 
-// function ComparePassword(inputPassword, storedHashedPassword) {
-//     return bcrypt.compareSync(inputPassword, storedHashedPassword);
-// }
 
-function HashPassword(password) {
-    return hashSync(password);
-}
-
-export function CreateUser(email, password) {
+export function CreateUserLocal(email, password) {
     const isExists = FindUserByEmail(email);
     if (isExists) {
         throw new Error("User already exists with this email.");
@@ -31,5 +25,33 @@ export function CreateUser(email, password) {
  
     users.push(newUser);
     return newUser;
+}
 
+export async function createUser(email, password, phone) {
+    if (!email || !password || !phone) {
+        throw new Error("Missing required fields.");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    try{
+        const newUser = new Users.create({
+            email,
+            hashedPassword,
+            phone,
+        });
+
+        return newUser;
+    }
+    catch (error) {
+        if (error.code === 11000) {
+            if (error.keyPattern.email) {
+                throw new Error("Email already in use.");
+            }
+            if (error.keyPattern.phone) {
+                throw new Error("Phone number already in use.");
+            }
+        }
+        throw error;
+    }
 }

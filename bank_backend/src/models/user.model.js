@@ -6,27 +6,35 @@ const userSchema = new mongoose.Schema({
         auto: true
     },
     email: {
-        type: String,
+      type: String,
         required: true,
         unique: true,
         lowercase: true,
+        trim: true,
+        match: [/^\S+@\S+\.\S+$/, 'Invalid email format'],
     },
     passwordHash: {
         type: String,
-        required: true
+        required: true,
+        select: false,
     },
     balance: {
-        type: Number,
-        default: 0
+        type: mongoose.Schema.Types.Decimal128,
+        required: true,
+        default: 0,
+        min: 0
     },
     phone: {
         type: String,
         required: true,
+        unique: true,
+        trim: true,
+        match: [/^\+?[0-9]{9,15}$/, 'Invalid phone number'],
     },
-    verified: {
+    isVerified: {
         type: Boolean,
         default: false
     }
 }, { timestamps: true });
 
-export default mongoose.model("User", userSchema);
+export default mongoose.model("Users", userSchema);
