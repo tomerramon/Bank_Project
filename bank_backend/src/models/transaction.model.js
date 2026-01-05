@@ -6,12 +6,12 @@ const transactionSchema = new mongoose.Schema({
         auto: true,
         unique: true
     },
-    fromUserId: {
+    userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
-    toUserId: {
+    peerUserId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
@@ -19,13 +19,17 @@ const transactionSchema = new mongoose.Schema({
     amount: {
         type: Number,
         required: true,
-        min: 0.01
+        min: 0.01,
     },
-    type: {
+    direction: {
         type: String,
-        enum: ['debit', 'credit'],
+        enum: ['T_IN', 'T_OUT'],
         required: true
-    }
-}, { timestamps: true ,indexes: [{ fromUser: 1 }, { toUser: 1 }]});
+    },
+    reference: {
+        type: String,
+        required: true,
+    },
+}, { timestamps: true ,indexes: [{ peerUserId: 1 }, { reference: 1 }, { reference: 1 }] });
 
-export default mongoose.model('Transaction', transactionSchema);
+export default mongoose.model('Transactions', transactionSchema);
