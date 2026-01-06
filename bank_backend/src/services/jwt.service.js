@@ -1,18 +1,31 @@
 import jwt from 'jsonwebtoken';
 
-const SECRET_KEY = process.env.JWT_ACCESS_SECRET;
 
-export function GenerateToken(user) {
+export function generateAccessToken(user) {
     return jwt.sign(
         {
             id: user.id,
             email: user.email
         },
-        SECRET_KEY,
-        { expiresIn: "1h" }
+        process.env.JWT_ACCESS_SECRET,
+        { expiresIn: "15m" }
     );
 }
 
-export function VerifyToken(token) {
-    return jwt.verify(token, SECRET_KEY);
+export function generateRefreshToken(user) {
+    return jwt.sign(
+        {
+            id: user.id,
+        },
+        process.env.JWT_REFRESH_SECRET,
+        { expiresIn: "7d" }
+    );
+}
+
+export function verifyAccessToken(token) {
+    return jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+}
+
+export function verifyRefreshToken(token) {
+    return jwt.verify(token, process.env.JWT_REFRESH_SECRET);
 }

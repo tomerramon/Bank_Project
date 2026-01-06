@@ -1,4 +1,4 @@
-import {verifyToken} from '../services/jwt.service.js';
+import {verifyAccessToken } from '../services/jwt.service.js';
 
 export function authMiddleware(req, res, next) {
     const authHeader = req.headers.authorization;
@@ -12,7 +12,7 @@ export function authMiddleware(req, res, next) {
     }
 
     try {
-        const payload  = verifyToken(token);
+        const payload  = verifyAccessToken(token);
         req.user = payload ;
         next();
     } catch (error) {

@@ -34,7 +34,17 @@ const userSchema = new mongoose.Schema({
     isVerified: {
         type: Boolean,
         default: false
-    }
+    },
+    refreshTokens: [{
+        token: {
+            type: String,
+            required: true
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
 }, { timestamps: true });
 
 export default mongoose.model("Users", userSchema);

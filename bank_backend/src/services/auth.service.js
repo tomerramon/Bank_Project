@@ -1,10 +1,11 @@
 import bycrypt from "bcryptjs";
-import { GenerateToken } from "./jwt.service.js";
+import { generateAccessToken, generateRefreshToken } from "./jwt.service.js";
 import Users from '../models/user.model.js';
 
 export async function AuthenticateUser(email, password) {
 
-    const user = await Users.findOne({ email }).select('+hashedPassword');
+    const user = await Users.findOne({ email })
+                            .select('+hashedPassword');
 
     if (!user) {
         throw new Error("Authentication failed: Invalid email or password.");
@@ -19,9 +20,15 @@ export async function AuthenticateUser(email, password) {
         throw new Error("Authentication failed: user is not verified.");
     }
 
-    const token = GenerateToken(user);
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    user.refreshTokens.push({ token: refreshToken });
+    await user.save();
+
     return {
-        token,
+        token: accessToken,
+        refresToken: refreshToken,
         user: {
             id: user._id,
             email: user.email

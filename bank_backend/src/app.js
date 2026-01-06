@@ -1,4 +1,5 @@
 import express, { json } from 'express';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 
@@ -9,6 +10,7 @@ import transactionRoutes from "./routes/transaction.route.js";
 
 // Middleware:
 app.use(json());
+app.use(cookieParser());
 
 // Main routes:
 app.use("/auth", authRoutes);
