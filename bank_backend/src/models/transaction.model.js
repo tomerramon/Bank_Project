@@ -30,6 +30,6 @@ const transactionSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-}, { timestamps: true ,indexes: [{ peerUserId: 1 }, { reference: 1 }, { reference: 1 }] });
+}, { timestamps: true ,indexes: [{ peerUserId: 1 }, { reference: 1 }] });
 
 export default mongoose.model('Transactions', transactionSchema);
