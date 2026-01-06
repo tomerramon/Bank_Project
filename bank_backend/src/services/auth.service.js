@@ -1,4 +1,4 @@
-import bycrypt from "bcryptjs";
+import bcrypt from "bcryptjs";
 import { generateAccessToken, generateRefreshToken } from "./jwt.service.js";
 import Users from '../models/user.model.js';
 
@@ -11,7 +11,7 @@ export async function AuthenticateUser(email, password) {
         throw new Error("Authentication failed: Invalid email or password.");
     }
 
-    const isPasswordMatch = await bycrypt.compare(password, user.hashedPassword);
+    const isPasswordMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordMatch) {
         throw new Error("Authentication failed: Invalid email or password.");
     }

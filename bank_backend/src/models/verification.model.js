@@ -12,9 +12,13 @@ const verificationSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
-    otp: {
+    hashedOTP: {
         type: String,
         required: true,
+    },
+    attempts: {
+        type: Number,
+        default: 0,
     },
     type: {
         type: String,
@@ -26,6 +30,8 @@ const verificationSchema = new mongoose.Schema({
         required: true,
     }
 }, { timestamps: true });
+
+verificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 export default mongoose.model('Verifications', verificationSchema);
 
