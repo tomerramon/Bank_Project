@@ -1,7 +1,6 @@
-import { useSyncExternalStore } from 'react';
 import { AuthenticateUser } from '../services/auth.service.js';
 import { updateRefreshToken } from '../services/token.service.js';
-
+import Users from '../models/user.model.js';
 
 export async function loginController(req, res) {
     try {
@@ -55,7 +54,7 @@ export async function refreshTokenController(req, res) {
 }
 
 export async function logoutController(req, res) {
-    const refreshToken = req.coockies.refreshToken;
+    const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
         return res.sendStatus(204);
     }

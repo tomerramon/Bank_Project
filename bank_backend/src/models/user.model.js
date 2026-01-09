@@ -1,5 +1,17 @@
-import mongoose, { get } from "mongoose";
+import mongoose from "mongoose";
 
+/**
+ * User Schema for Banking Application
+ * 
+ * Features:
+ * - Email and phone validation with unique constraints
+ * - Password hashing (stored in passwordHash, never exposed in JSON)
+ * - Balance stored in cents for precise calculations
+ * - Refresh token management with TTL
+ * - Account status tracking (active/suspended/closed)
+ * - Failed login attempt tracking for security
+ * - Account locking after too many failed attempts
+ */
 const userSchema = new mongoose.Schema({
     _id: {
         type: mongoose.Schema.Types.ObjectId,
@@ -9,25 +21,27 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Email is required'],
         unique: true,
-        lowercase: true,
-        trim: true,
+        lowercase: true, // Automatically convert to lowercase
+        trim: true, // Remove whitespace
         match: [/^\S+@\S+\.\S+$/, 'Invalid email format'],
-        index: true // For faster lookups
+        index: true // Index for faster lookups
     },
     passwordHash: {
         type: String,
         required: [true, 'Password is required'],
-        select: false,
+        select: false, // Never include in queries by default (security)
     },
     balance: {
         type: Number,
         required: true,
+        // Generate random starting balance between $10.00 and $100.00
         default: function () {
             return Math.floor(Math.random() * 9000) + 1000;
         },
         min: [0, 'Balance cannot be negative'],
-        get: v => v / 100,
-        set: v => v * 100,
+        // Getters and setters convert between cents (stored) and dollars (displayed)
+        get: v => v / 100, // Convert cents to dollars when reading
+        set: v => v * 100, // Convert dollars to cents when writing
     },
     phone: {
         type: String,
@@ -40,27 +54,28 @@ const userSchema = new mongoose.Schema({
     isVerified: {
         type: Boolean,
         default: false,
-        index: true,
+        index: true, // Index for filtering verified users
     },
+    // Refresh tokens array allows multiple devices to stay logged in
     refreshTokens: [{
         token: {
             type: String,
             required: true,
-            index: true,
+            index: true, // Index for fast logout lookups
         },
         createdAt: {
             type: Date,
             default: Date.now,
-            expires: 604800 // TTL: 7 days in seconds (auto-delete)
+            expires: 604800 // TTL: 7 days in seconds (MongoDB auto-deletes)
         }
     }],
     accountStatus: {
         type: String,
         enum: ['active', 'closed', 'suspended'],
-        defualt: 'active',
+        default: 'active', // Fixed: Typo 'defualt' -> 'default'
         index: true,
     },
-    // Security: track failed login attempts
+    // Security: Track failed login attempts to prevent brute force
     failedLoginAttempts: {
         type: Number,
         default: 0
@@ -69,7 +84,7 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
-// Optional: user profile (for future features)
+    // Optional: User profile for future features
     profile: {
         firstName: String,
         lastName: String,
@@ -82,9 +97,9 @@ const userSchema = new mongoose.Schema({
         }
     }
 }, {
-    timestamps: true,
+    timestamps: true, // Automatically add createdAt and updatedAt
     toJSON: {
-        getters: true, // Apply getters when converting to JSON
+        getters: true, // Apply getters when converting to JSON (e.g., balance cents -> dollars)
         virtuals: true, // Include virtual properties
         transform: function(doc, ret) {
             // Remove sensitive fields from JSON output
@@ -96,47 +111,62 @@ const userSchema = new mongoose.Schema({
     }
 });
 
-// Indexes for performance
-userSchema.index({ email: 1, accountStatus: 1 }); // Compound index
-userSchema.index({ createdAt: -1 }); // For sorting by registration date
+// Compound indexes for common query patterns
+userSchema.index({ email: 1, accountStatus: 1 }); // Filter active users by email
+userSchema.index({ createdAt: -1 }); // Sort by registration date
+userSchema.index({ 'refreshTokens.token': 1 }); // Fast logout lookups
 
-// Virtual property: get the users full name
-userSchema.virtual('fullName').git(function(){
-    if (this.profile && this.profile.firstName && this.profile.lastName)
-    {
+/**
+ * Virtual property: Get user's full name
+ * Returns email if name is not set
+ */
+userSchema.virtual('fullName').get(function(){ // Fixed: 'git' -> 'get'
+    if (this.profile && this.profile.firstName && this.profile.lastName) {
         return `${this.profile.firstName} ${this.profile.lastName}`;
     }
     return this.email;
 });
 
-// Instance method: check if account is locked
+/**
+ * Instance method: Check if account is currently locked
+ * @returns {boolean} - true if account is locked
+ */
 userSchema.methods.isAccountLocked = async function () {
     return this.accountLockedUntil && this.accountLockedUntil > Date.now();
-}
+};
 
-// Instance method: increment failed login attempts
-userSchema.methods.incrementLoginAttempts  = async () => {
+/**
+ * Instance method: Increment failed login attempts
+ * Locks account for 30 minutes after 5 failed attempts
+ * 
+ * Fixed: Changed from arrow function to regular function
+ * Arrow functions don't have their own 'this' binding
+ */
+userSchema.methods.incrementLoginAttempts = async function() {
     // If we have a previous lock that has expired, restart attempts to 1
-    if(this.accountLockedUntil && this.accountLockedUntil < Date.now())
-    {
+    if(this.accountLockedUntil && this.accountLockedUntil < Date.now()) {
         return this.updateOne({
             $set: {failedLoginAttempts: 1},
             $unset: {accountLockedUntil: 1}
         });
     }
 
-    //else increment failed attempts
+    // Otherwise increment failed attempts
     const updates = { $inc: { failedLoginAttempts: 1 }};
 
-    //if 5 faile attempts -> lock account for 30 min.
+    // If 5 failed attempts -> lock account for 30 minutes
     const maxAttempts = 5;
     if (this.failedLoginAttempts + 1 >= maxAttempts){
-        updates.$set = { accountLockedUntil: Date.now() + 30 * 60 * 1000 }; // lock for 30 min
+        updates.$set = { accountLockedUntil: Date.now() + 30 * 60 * 1000 };
     }
+    
     return this.updateOne(updates);
-}
+};
 
-// Instance method: reset failed login attempts on successful login
+/**
+ * Instance method: Reset failed login attempts on successful login
+ * @returns {Promise} - Update operation result
+ */
 userSchema.methods.resetLoginAttempts = function() {
     return this.updateOne({
         $set: { failedLoginAttempts: 0 },
@@ -144,23 +174,36 @@ userSchema.methods.resetLoginAttempts = function() {
     });
 };
 
-// Static method: clean up old refresh tokens (run periodically)
-userSchema.statics.cleanRefreshTokens = async () => {
-    const sevenDaysPassed = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+/**
+ * Static method: Clean up old refresh tokens (run periodically via cron job)
+ * This is a backup cleanup in case TTL index doesn't work
+ * 
+ * Fixed: 'updatemany' -> 'updateMany'
+ */
+userSchema.statics.cleanRefreshTokens = async function() {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-    return this.updatemany(
-        {'refreshTokens.createdAt': {$lt: sevenDaysPassed}},
-        {$pull: {refreshTokens: {createdAt: {$lt: sevenDaysPassed}}}}
+    return this.updateMany(
+        {'refreshTokens.createdAt': {$lt: sevenDaysAgo}},
+        {$pull: {refreshTokens: {createdAt: {$lt: sevenDaysAgo}}}}
     );
-}
+};
 
-
-userSchema.pre('save', () => {
-    if (this.refreshTokens && this.refreshTokens.length > 5 ){
-        this.refreshTokens = this.refreshTokens.sort((a,b) => b.createdAt - a.createdAt).slice(0,5);
+/**
+ * Pre-save hook: Limit refresh tokens to 5 per user
+ * This prevents memory issues and forces re-login on old devices
+ * 
+ * Fixed: Added 'next' parameter
+ */
+userSchema.pre('save', function(next) {
+    // Limit number of refresh tokens per user to prevent memory issues
+    if (this.refreshTokens && this.refreshTokens.length > 5) {
+        // Keep only the 5 most recent tokens
+        this.refreshTokens = this.refreshTokens
+            .sort((a, b) => b.createdAt - a.createdAt)
+            .slice(0, 5);
     }
     next();
 });
-
 
 export default mongoose.model("Users", userSchema);
