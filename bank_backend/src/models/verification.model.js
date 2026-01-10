@@ -61,4 +61,69 @@ verificationSchema.index({
 });
 
 
+// Static method: create new OTP
+verificationSchema.statics.createOTP = async function(userId, type, otpHash, expirationMinutes = 10) {
+    // Delete any existing unused OTPs of the same type for this user
+    await this.deleteMany({ 
+        userId, 
+        type, 
+        isUsed: false 
+    });
+
+    const expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
+
+    return this.create({
+        userId,
+        hashedOTP: otpHash,
+        type,
+        expiresAt
+    });
+};
+
+
+// Static method: find valid OTP
+verificationSchema.statics.findValidOTP = async function(userId, type) {
+    return this.findOne({
+        userId,
+        type,
+        isUsed: false,
+        expiresAt: { $gt: new Date() }
+    }).sort({ createdAt: -1 }); // Get the most recent one
+};
+
+
+// Instance method: mark as used
+verificationSchema.methods.markAsUsed = async function() {
+    this.isUsed = true;
+    this.verifiedAt = new Date();
+    return this.save();
+};
+
+
+// Instance method: increment attempts
+verificationSchema.methods.incrementAttempts = async function() {
+    this.attempts += 1;
+    return this.save();
+};
+
+
+// Instance method: check if max attempts reached
+verificationSchema.methods.hasReachedMaxAttempts = function() {
+    return this.attempts >= 5;
+};
+
+
+// Static method: cleanup old used verifications (run periodically)
+verificationSchema.statics.cleanupOldVerifications = async function() {
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    
+    const result = await this.deleteMany({
+        isUsed: true,
+        verifiedAt: { $lt: threeDaysAgo }
+    });
+
+    return result.deletedCount;
+};
+
+
 export default mongoose.model('Verifications', verificationSchema);

@@ -14,6 +14,8 @@ const MIN_TRANSFER_AMOUNT = 0.01;  // $0.01
  * @returns {Promise<Array>} - Array of transaction documents
  */
 export async function GetTransactionsByUserId(userId) {
+
+    //     return Transactions.getUserTransactions(userId, options);
     return await Transactions.find({ userId })
         .sort({ createdAt: -1 }) // Most recent first
         .populate('peerUserId', 'email'); // Include peer user email
@@ -170,7 +172,7 @@ export const transferMoney = async (fromUserId, toEmail, amount) => {
 
         // Commit transaction, If we reach here, all operations succeeded
         await session.commitTransaction();
-        
+
         // Return success response with all details
         return {
             success: true,
@@ -209,6 +211,7 @@ export const transferMoney = async (fromUserId, toEmail, amount) => {
  * @returns {Promise<Array>} - Both transaction records (sender and receiver)
  */
 export async function getTransactionByReference(reference) {
+    // return Transactions.getByReference(reference);
     return await Transactions.find({ reference })
         .populate('userId', 'email')
         .populate('peerUserId', 'email');

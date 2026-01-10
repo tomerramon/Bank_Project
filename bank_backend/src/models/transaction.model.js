@@ -15,7 +15,7 @@ const transactionSchema = new mongoose.Schema({
     },
     peerUserId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Users',
         required: [true, 'Peer user ID is required'],
         index: true,
     },
@@ -38,7 +38,6 @@ const transactionSchema = new mongoose.Schema({
     reference: {
         type: String,
         required: [true, 'Reference is required'],
-
     },
 }, {
     timestamps: true, // Adds createdAt and updatedAt
@@ -64,6 +63,72 @@ transactionSchema.virtual('formattedAmount').get(function() {
     const sign = this.direction === 'T_IN' ? '+' : '-';
     return `${sign}$${amount.toFixed(2)}`;
 });
+
+// Static method: get transaction by reference
+transactionSchema.statics.getByReference = async function(reference) {
+    return this.find({ reference })
+        .populate('userId', 'email')
+        .populate('peerUserId', 'email')
+        .lean();
+};
+
+
+// Virtual property: peer email (populated)
+transactionSchema.virtual('peerEmail', {
+    ref: 'Users',
+    localField: 'peerUserId',
+    foreignField: '_id',
+    justOne: true,
+    options: { select: 'email' }
+});
+
+
+
+// Static method: get user's transaction history with pagination
+transactionSchema.statics.getUserTransactions = async function(userId, options = {}) {
+    const {
+        page = 1,
+        limit = 20,
+        direction = null,
+        startDate = null,
+        endDate = null
+    } = options;
+
+    const query = { userId };
+    
+    if (direction) {
+        query.direction = direction;
+    }
+    
+    if (startDate || endDate) {
+        query.createdAt = {};
+        if (startDate) query.createdAt.$gte = new Date(startDate);
+        if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [transactions, total] = await Promise.all([
+        this.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .populate('peerUserId', 'email profile.firstName profile.lastName')
+            .lean(),
+        this.countDocuments(query)
+    ]);
+
+    return {
+        transactions,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasMore: skip + transactions.length < total
+        }
+    };
+};
 
 
 

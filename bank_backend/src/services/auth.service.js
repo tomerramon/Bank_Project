@@ -47,14 +47,14 @@ export async function AuthenticateUser(email, password) {
 
     // Verify password using bcrypt
     // bcrypt.compare is secure against timing attacks
-    const isPasswordMatch = bcrypt.compare(password, user.passwordHash);
+    const isPasswordMatch = await bcrypt.compare(password, user.passwordHash);
     
     if (!isPasswordMatch) {
         // Increment failed login attempts
         await user.incrementLoginAttempts();
 
         // Check if account should now be locked (after increment)
-        if (user.failedLoginAttempts + 1 >= 5) {
+        if (user.failedLoginAttempts >= 5) {
             throw new Error(
                 'Too many failed login attempts. ' +
                 'Your account has been locked for 30 minutes.'

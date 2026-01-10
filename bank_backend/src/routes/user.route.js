@@ -1,24 +1,34 @@
 import { Router } from 'express';
 import {authMiddleware} from "../middlewares/auth.middleware.js";
-import {users, transactions} from "../config/local_users.config.js";
+import { getUserProfile } from '../services/user.service.js';
+import { getUserProfile } from '../services/user.service.js';
 
 const router = Router();
 
-router.get("/me", authMiddleware, (req,res) => {
-    const user = users.find(u => u.id === req.user.id);
-    if (!user) {
-        return res.status(404).json({ message: "User not found." });
+router.get("/me", authMiddleware, async (req, res) => {
+    try {
+        const profile = await getUserProfile(req.user.id);
+        res.json(profile);
+    } catch (error) {
+        res.status(500).json({ 
+            message: "Failed to get profile", 
+            error: error.message 
+        });
     }
-    const userTransactions = transactions.filter(tx => tx.userId === user.id);
-    res.json({ 
-        email: user.email,
-        balance: user.balance,
-        transactions: userTransactions
-    });
 });
 
-router.get("/all", (req,res) => {
-    res.json({ users });
+router.get("/all", async (req, res) => {
+    try {
+        // WARNING: In production, this should be admin-only
+        const users = await Users.find({})
+            .select('email balance isVerified accountStatus createdAt');
+        res.json({ users });
+    } catch (error) {
+        res.status(500).json({ 
+            message: "Failed to get users", 
+            error: error.message 
+        });
+    }
 });
 
 export default router;

@@ -39,9 +39,6 @@ const userSchema = new mongoose.Schema({
             return Math.floor(Math.random() * 9000) + 1000;
         },
         min: [0, 'Balance cannot be negative'],
-        // Getters and setters convert between cents (stored) and dollars (displayed)
-        get: v => v / 100, // Convert cents to dollars when reading
-        set: v => v * 100, // Convert dollars to cents when writing
     },
     phone: {
         type: String,
@@ -72,7 +69,7 @@ const userSchema = new mongoose.Schema({
     accountStatus: {
         type: String,
         enum: ['active', 'closed', 'suspended'],
-        default: 'active', // Fixed: Typo 'defualt' -> 'default'
+        default: 'active',
         index: true,
     },
     // Security: Track failed login attempts to prevent brute force
