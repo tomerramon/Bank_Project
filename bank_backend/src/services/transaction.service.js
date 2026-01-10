@@ -2,39 +2,21 @@
 import mongoose from 'mongoose';
 import Users from '../models/user.model.js';
 import Transactions from '../models/transaction.model.js';
-
-// Configuration
-const MAX_TRANSFER_AMOUNT = 10000; // $10,000
-const MIN_TRANSFER_AMOUNT = 0.01;  // $0.01
-
-
-/**
- * Get all transactions for a specific user
- * @param {string} userId - MongoDB ObjectId
- * @returns {Promise<Array>} - Array of transaction documents
- */
-export async function GetTransactionsByUserId(userId) {
-
-    //     return Transactions.getUserTransactions(userId, options);
-    return await Transactions.find({ userId })
-        .sort({ createdAt: -1 }) // Most recent first
-        .populate('peerUserId', 'email'); // Include peer user email
-}
-
-
-/**
- * Get transactions by user email
- * @param {string} email - User's email address
- * @returns {Promise<Array>} - Array of transaction documents
- */
-export async function GetTransactionsByUserEmail(email) {
-    const user = await Users.findOne({ email });
-    if (!user) {
-        throw new Error("User not found.");
-    }
-    return GetTransactionsByUserId(user._id);
-}
-
+import { dollarsToCents, centsToDollars } from '../utils/currency.util.js';
+import { CURRENCY } from '../config/constants.config.js';
+import {
+    findActiveVerifiedUser,
+    findUserByEmail,
+    getRecentTransactions,
+    getUserTransactions as queryGetUserTransactions,
+} from '../utils/query.util.js'
+import { validateUserCanReceiveMoney } from '../utils/validation.util.js'
+import {
+    InsufficientFundsError,
+    SelfTransferError,
+    UserNotFoundError,
+    InvalidAmountError
+} from '../utils/errors.util.js';
 
 /**
  * Transfer money between two users (atomic transaction)
@@ -60,68 +42,54 @@ export const transferMoney = async (fromUserId, toEmail, amount) => {
     // Validate amount
     amount = Number(amount);
     if (!Number.isFinite(amount) || amount <= 0) {
-        throw new Error(`Invalid transfer amount: ${amount}`);
+        throw new InvalidAmountError(amount, 'must be greater than zero');
     }
 
     if (amount < MIN_TRANSFER_AMOUNT) {
-        throw new Error(`Minimum transfer amount is $${MIN_TRANSFER_AMOUNT}`);
+        throw new InvalidAmountError(
+            amount,
+            `minimum is $${CURRENCY.MIN_TRANSFER_AMOUNT}`
+        );
     }
 
     if (amount > MAX_TRANSFER_AMOUNT) {
-        throw new Error(`Maximum transfer amount is $${MAX_TRANSFER_AMOUNT}`);
+        throw new InvalidAmountError(
+            amount,
+            `maximum is $${CURRENCY.MAX_TRANSFER_AMOUNT}`
+        );
     }
 
     //Convert amount to transfer to cents, for correct calculation.
-    const amountInCents = Math.floor(amount * 100);
+    const amountInCents = dollarsToCents(amount);
 
     // Start MongoDB transaction session
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        const sender = await Users.findById(fromUserId)
-            .session(session) // Include this operation in the transaction
-            .select('_id email isVerified accountStatus balance');
-
-        if (!sender) {
-            throw new Error('Sender user not found');
-        }
-
-        // Business rules: Only verified users with active accounts can send money
-        if (!sender.isVerified) {
-            throw new Error('Your account must be verified before you can send money');
-        }
-
-        if (sender.accountStatus !== 'active') {
-            throw new Error('Your account is not active. Please contact support.');
-        }
+        const sender = await findActiveVerifiedUser(fromUserId, session);
 
         const receiver = await Users.findOne({ email: toEmail })
             .session(session)
             .select('_id email isVerified accountStatus balance');
 
         if (!receiver) {
-            throw new Error('Receiver not found. Please check the email address.');
+            throw new UserNotFoundError(toEmail);
         }
 
-        if (!receiver.isVerified) {
-            throw new Error('Receiver account is not verified');
-        }
-
-        if (receiver.accountStatus !== 'active') {
-            throw new Error('Receiver account is not active');
-        }
+        validateUserCanReceiveMoney(receiver);
 
         // Prevent self-transfer
-        if (receiver._id.equals(fromUserId)) {
-            throw new Error('Cannot transfer money to the same account');
+        if (sender._id.equals(receiver._id)) {
+            throw new SelfTransferError();
         }
 
         // Check sender has sufficient balance (balance is stored in cents)
         if (amountInCents > sender.balance) {
-            throw new Error(
-                `Insufficient funds. Your balance: $${(sender.balance / 100).toFixed(2)}, ` +
-                `Transfer amount: $${amount.toFixed(2)}`
+            const senderBalanceDollars = centsToDollars(sender.balance);
+            throw new InsufficientFundsError(
+                senderBalanceDollars.toFixed(2),
+                amountInDollars.toFixed(2)
             );
         }
 
@@ -138,7 +106,10 @@ export const transferMoney = async (fromUserId, toEmail, amount) => {
 
         // If no document was matched, balance check failed (race condition)
         if (senderResult.matchedCount !== 1) {
-            throw new Error('Insufficient funds (concurrent transaction detected)');
+            throw new InsufficientFundsError(
+                centsToDollars(sender.balance).toFixed(2),
+                amountInDollars.toFixed(2)
+            );
         }
 
         // Perform atomic credit to receiver
@@ -205,28 +176,76 @@ export const transferMoney = async (fromUserId, toEmail, amount) => {
     }
 };
 
+
+/**
+ * Get all transactions for a user with pagination and filters
+ * 
+ * @param {string} userId - User's ID
+ * @param {Object} options - Query options (page, limit, direction, dates)
+ * @returns {Promise<Object>} - Transactions with pagination info
+ */
+export async function getUserTransactions(userId, options = {}) {
+    // Reuse query helper
+    return await queryGetUserTransactions(userId, options);
+}
+
+/**
+ * Get recent transactions for dashboard
+ * 
+ * @param {string} userId - User's ID
+ * @param {number} limit - Number of transactions (default: 10)
+ * @returns {Promise<Array>} - Recent transactions
+ */
+export async function getUserRecentTransactions(userId, limit = 10) {
+    return await getRecentTransactions(userId, limit);
+}
+
+/**
+ * Get transactions by user email
+ * @param {string} email - User's email address
+ * @returns {Promise<Array>} - Array of transaction documents
+ */
+export async function GetTransactionsByUserEmail(email) {
+    const user = await findUserByEmail(email)
+    if (!user) {
+        throw new Error("User not found.");
+    }
+    return getUserTransactions(user._id);
+}
+
 /**
  * Get transaction by reference ID
+ * Returns both sides of the transfer (sender and receiver)
+ * 
  * @param {string} reference - Unique transaction reference
- * @returns {Promise<Array>} - Both transaction records (sender and receiver)
+ * @returns {Promise<Array>} - Both transaction records
  */
 export async function getTransactionByReference(reference) {
-    // return Transactions.getByReference(reference);
-    return await Transactions.find({ reference })
+    const transactions = await Transactions.find({ reference })
         .populate('userId', 'email')
         .populate('peerUserId', 'email');
+
+    if (!transactions || transactions.length === 0) {
+        throw new Error('Transaction not found');
+    }
+
+    return transactions;
 }
 
 
 /**
- * Get user's balance
+ * Get user's balance in dollars
+ * 
  * @param {string} userId - User's ID
  * @returns {Promise<number>} - Balance in dollars
  */
 export async function getUserBalance(userId) {
     const user = await Users.findById(userId).select('balance');
+    
     if (!user) {
-        throw new Error('User not found');
+        throw new UserNotFoundError();
     }
-    return user.balance; // Getter converts cents to dollars automatically
+
+    // Convert cents to dollars using utility
+    return centsToDollars(user.balance);
 }

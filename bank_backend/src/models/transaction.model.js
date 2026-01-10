@@ -23,8 +23,6 @@ const transactionSchema = new mongoose.Schema({
         type: Number,
         required: [true, 'Amount is required'],
         min: [1, 'Amount must be at least 0.01 (Minimum 1 cent) '], // Minimum 1 cent
-        get: v => v / 100,
-        set: v => Math.floor(v * 100),
     },
     direction: {
         type: String,
@@ -42,7 +40,6 @@ const transactionSchema = new mongoose.Schema({
 }, {
     timestamps: true, // Adds createdAt and updatedAt
     toJSON: {
-        getters: true,
         virtuals: true,
         transform: function (doc, ret) {
             delete ret.__v;

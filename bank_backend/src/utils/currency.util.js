@@ -1,9 +1,10 @@
 /**
- * Currency Utilities
+ * Currency Utilities - FIXED VERSION
  * 
  * Centralized currency conversion between dollars and cents.
- * This prevents the collision issue between model getters/setters
- * and service-level conversions.
+ * 
+ * IMPORTANT: Only use these functions in SERVICE layer.
+ * DO NOT use getters/setters in models to avoid double conversion.
  * 
  * Why use cents internally?
  * - Avoids JavaScript floating-point precision errors
@@ -11,20 +12,21 @@
  * - With cents: 10 + 20 = 30 (correct!)
  */
 
-import { CURRENCY } from "../config/constants.config";
+import { CURRENCY } from "../config/constants.config.js";
 
 /**
  * Convert cents to dollars
  * 
  * @param {number} cents - Amount in cents
  * @returns {number} - Amount in dollars with 2 decimal places
+ * @throws {TypeError} - If cents is not a valid number
  */
 export function centsToDollars(cents) {
-    if ((typeof cents !== 'number') || (!Number.isNaN(cents))) {
-        throw new TypeError('Cents must be a finite number');
+    if (typeof cents !== 'number' || Number.isNaN(cents) || !Number.isFinite(cents)) {
+        throw new TypeError(`Cents must be a finite number, got: ${cents}`);
     }
 
-    return Number((cents / 100).toFixed(CURRENCY.DECIMAL_PLACES))
+    return Number((cents / 100).toFixed(CURRENCY.DECIMAL_PLACES));
 }
 
 /**
@@ -32,13 +34,14 @@ export function centsToDollars(cents) {
  * 
  * @param {number} dollars - Amount in dollars
  * @returns {number} - Amount in cents (integer)
+ * @throws {TypeError} - If dollars is not a valid number
  */
 export function dollarsToCents(dollars) {
-    if (typeof dollars !== 'number' || !Number.isNaN(dollars)) {
-        throw new TypeError('Dollars must be a finite number');
+    if (typeof dollars !== 'number' || Number.isNaN(dollars) || !Number.isFinite(dollars)) {
+        throw new TypeError(`Dollars must be a finite number, got: ${dollars}`);
     }
 
-    return Math.floor(dollars * 100);
+    return Math.round(dollars * 100); // Changed from Math.floor to Math.round for accuracy
 }
 
 /**
@@ -46,57 +49,53 @@ export function dollarsToCents(dollars) {
  * 
  * @param {number} cents - Amount in cents
  * @param {string} currency - Currency symbol (default: '$')
- * @returns {string} - Formatted currency string
+ * @returns {string} - Formatted currency string (e.g., "$123.45")
  */
 export function formatCurrency(cents, currency = '$') {
     const dollars = centsToDollars(cents);
     const sign = dollars > 0 ? '+' : '-';
-    const absDollars = Math.abs(dollars);
 
-    return `${sign}${currency}${absDollars.toFixed(CURRENCY.DECIMAL_PLACES)}`;
+    return `${sign}${currency}${Math.abs(dollars).toFixed(CURRENCY.DECIMAL_PLACES)}`;
 }
-
 
 /**
  * Format transaction amount with direction sign
  * 
  * @param {number} cents - Amount in cents
  * @param {string} direction - Transaction direction ('T_IN' or 'T_OUT')
- * @returns {string} - Formatted amount with +/- sign
+ * @returns {string} - Formatted amount with +/- sign (e.g., "+$50.00" or "-$50.00")
  */
 export function formatTransactionAmount(cents, direction) {
     const dollars = centsToDollars(cents);
     const sign = direction === 'T_IN' ? '+' : '-';
-
-    return `${sign}$${dollars.toFixed(CURRENCY.DECIMAL_PLACES)}`;
+    return `${sign}$${Math.abs(dollars).toFixed(CURRENCY.DECIMAL_PLACES)}`;
 }
-
 
 /**
  * Validate amount is within transfer limits
  * 
  * @param {number} dollars - Amount in dollars
  * @returns {boolean} - true if valid
- * @throws {Error} - If amount is invalid
+ * @throws {Error} - If amount is invalid with specific reason
  */
 export function validateTransferAmount(dollars) {
-    if (typeof dollars !== 'number' || !Number.isNaN(dollars)) {
-        throw new TypeError('Amount must be a number');
+    if (typeof dollars !== 'number' || Number.isNaN(dollars) || !Number.isFinite(dollars)) {
+        throw new TypeError('Amount must be a valid number');
     }
 
-    if (0 >= dollars) {
+    if (dollars <= 0) {
         throw new RangeError('Amount must be greater than zero');
     }
 
-    if (CURRENCY.MAX_TRANSFER_AMOUNT < dollars) {
+    if (dollars > CURRENCY.MAX_TRANSFER_AMOUNT) {
         throw new RangeError(
-            `Maximum transfer amount is $${CURRENCY.MAX_TRANSFER_AMOUNT}`
+            `Maximum transfer amount is $${CURRENCY.MAX_TRANSFER_AMOUNT.toFixed(2)}`
         );
     }
 
-    if (CURRENCY.MIN_TRANSFER_AMOUNT > dollars) {
+    if (dollars < CURRENCY.MIN_TRANSFER_AMOUNT) {
         throw new RangeError(
-            `Minimum transfer amount is $${CURRENCY.MIN_TRANSFER_AMOUNT}`
+            `Minimum transfer amount is $${CURRENCY.MIN_TRANSFER_AMOUNT.toFixed(2)}`
         );
     }
 
@@ -128,7 +127,7 @@ export function calculateNewBalance(currentBalance, amount, direction) {
     } else if (direction === 'T_OUT') {
         return currentBalance - amount;
     } else {
-        throw new Error(`Invalid direction: ${direction}`);
+        throw new Error(`Invalid direction: ${direction}. Must be 'T_IN' or 'T_OUT'`);
     }
 }
 
@@ -138,16 +137,21 @@ export function calculateNewBalance(currentBalance, amount, direction) {
  * 
  * @param {string} currencyString - Currency string
  * @returns {number} - Amount in cents
+ * @throws {Error} - If string cannot be parsed
  */
 export function parseCurrencyToCents(currencyString) {
+    if (typeof currencyString !== 'string') {
+        throw new TypeError('Currency string must be a string');
+    }
+
     // Remove currency symbols and spaces
-    const cleaned = currencyString.replace(/[$€£¥\s]/g, '');
+    const cleaned = currencyString.replace(/[$€£¥\s,]/g, '');
     const dollars = parseFloat(cleaned);
-    
-    if (isNaN(dollars)) {
+
+    if (isNaN(dollars) || !isFinite(dollars)) {
         throw new Error(`Invalid currency string: ${currencyString}`);
     }
-    
+
     return dollarsToCents(dollars);
 }
 
@@ -171,19 +175,22 @@ export function roundToCents(cents) {
  * @returns {number} - Calculated amount in cents (rounded)
  */
 export function calculatePercentage(amountCents, percentage) {
+    if (typeof percentage !== 'number' || percentage < 0 || percentage > 100) {
+        throw new RangeError('Percentage must be between 0 and 100');
+    }
+
     const result = (amountCents * percentage) / 100;
     return roundToCents(result);
 }
 
 /**
- * Compare two amounts with tolerance for floating point errors
+ * Compare two amounts (cents are exact integers, so simple comparison)
  * 
  * @param {number} cents1 - First amount in cents
  * @param {number} cents2 - Second amount in cents
  * @returns {boolean} - true if amounts are equal
  */
 export function isEqualAmount(cents1, cents2) {
-    // Amounts in cents should be exact integers
     return cents1 === cents2;
 }
 
