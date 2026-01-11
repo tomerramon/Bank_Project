@@ -10,13 +10,46 @@ import {
     getRecentTransactions,
     getUserTransactions as queryGetUserTransactions,
 } from '../utils/query.util.js'
-import { validateUserCanReceiveMoney } from '../utils/validation.util.js'
+import { validateUserCanReceiveMoney, requireDifferentUsers } from '../utils/userValidation.util.js'
 import {
     InsufficientFundsError,
     SelfTransferError,
     UserNotFoundError,
     InvalidAmountError
 } from '../utils/errors.util.js';
+
+
+/**
+ * Validate transfer amount
+ * Centralized validation to avoid duplication
+ * 
+ * @param {number} amount - Amount in dollars
+ * @throws {InvalidAmountError}
+ */
+function validateTransferAmount(amount) {
+    amount = Number(amount);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+        throw new InvalidAmountError(amount, 'must be greater than zero');
+    }
+
+    if (amount < CURRENCY.MIN_TRANSFER_AMOUNT) {
+        throw new InvalidAmountError(
+            amount,
+            `minimum is $${CURRENCY.MIN_TRANSFER_AMOUNT}`
+        );
+    }
+
+    if (amount > CURRENCY.MAX_TRANSFER_AMOUNT) {
+        throw new InvalidAmountError(
+            amount,
+            `maximum is $${CURRENCY.MAX_TRANSFER_AMOUNT}`
+        );
+    }
+
+    return amount;
+}
+
 
 /**
  * Transfer money between two users (atomic transaction)
@@ -40,27 +73,10 @@ import {
  */
 export const transferMoney = async (fromUserId, toEmail, amount) => {
     // Validate amount
-    amount = Number(amount);
-    if (!Number.isFinite(amount) || amount <= 0) {
-        throw new InvalidAmountError(amount, 'must be greater than zero');
-    }
-
-    if (amount < MIN_TRANSFER_AMOUNT) {
-        throw new InvalidAmountError(
-            amount,
-            `minimum is $${CURRENCY.MIN_TRANSFER_AMOUNT}`
-        );
-    }
-
-    if (amount > MAX_TRANSFER_AMOUNT) {
-        throw new InvalidAmountError(
-            amount,
-            `maximum is $${CURRENCY.MAX_TRANSFER_AMOUNT}`
-        );
-    }
+    const validatedAmount = validateTransferAmount(amount);
 
     //Convert amount to transfer to cents, for correct calculation.
-    const amountInCents = dollarsToCents(amount);
+    const amountInCents = dollarsToCents(validatedAmount);
 
     // Start MongoDB transaction session
     const session = await mongoose.startSession();
@@ -80,16 +96,14 @@ export const transferMoney = async (fromUserId, toEmail, amount) => {
         validateUserCanReceiveMoney(receiver);
 
         // Prevent self-transfer
-        if (sender._id.equals(receiver._id)) {
-            throw new SelfTransferError();
-        }
+        requireDifferentUsers(sender._id, receiver._id, 'transfer');
 
         // Check sender has sufficient balance (balance is stored in cents)
         if (amountInCents > sender.balance) {
             const senderBalanceDollars = centsToDollars(sender.balance);
             throw new InsufficientFundsError(
                 senderBalanceDollars.toFixed(2),
-                amountInDollars.toFixed(2)
+                validatedAmount.toFixed(2)
             );
         }
 
@@ -108,7 +122,7 @@ export const transferMoney = async (fromUserId, toEmail, amount) => {
         if (senderResult.matchedCount !== 1) {
             throw new InsufficientFundsError(
                 centsToDollars(sender.balance).toFixed(2),
-                amountInDollars.toFixed(2)
+                validatedAmount.toFixed(2)
             );
         }
 
@@ -148,19 +162,19 @@ export const transferMoney = async (fromUserId, toEmail, amount) => {
         return {
             success: true,
             reference,
-            amount: amount,
+            amount: validatedAmount,
             from: sender.email,
             to: receiver.email,
             timestamp: createdTransactions[0].createdAt,
             senderTransaction: {
                 id: createdTransactions[0]._id,
                 direction: 'T_OUT',
-                amount: -amount // Negative for outgoing
+                amount: -validatedAmount // Negative for outgoing
             },
             receiverTransaction: {
                 id: createdTransactions[1]._id,
                 direction: 'T_IN',
-                amount: amount // Positive for incoming
+                amount: validatedAmount // Positive for incoming
             }
         };
     }
@@ -205,10 +219,10 @@ export async function getUserRecentTransactions(userId, limit = 10) {
  * @param {string} email - User's email address
  * @returns {Promise<Array>} - Array of transaction documents
  */
-export async function GetTransactionsByUserEmail(email) {
+export async function getTransactionsByUserEmail(email) {
     const user = await findUserByEmail(email)
     if (!user) {
-        throw new Error("User not found.");
+        throw new UserNotFoundError(email);
     }
     return getUserTransactions(user._id);
 }
@@ -241,7 +255,7 @@ export async function getTransactionByReference(reference) {
  */
 export async function getUserBalance(userId) {
     const user = await Users.findById(userId).select('balance');
-    
+
     if (!user) {
         throw new UserNotFoundError();
     }
@@ -249,3 +263,12 @@ export async function getUserBalance(userId) {
     // Convert cents to dollars using utility
     return centsToDollars(user.balance);
 }
+
+export default {
+    transferMoney,
+    getUserTransactions,
+    getUserRecentTransactions,
+    getTransactionsByUserEmail,
+    getTransactionByReference,
+    getUserBalance
+};

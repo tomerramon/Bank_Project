@@ -8,7 +8,7 @@
 import Users from '../models/user.model.js';
 import Transactions from '../models/transaction.model.js';
 import { UserNotFoundError } from './errors.util.js';
-import { validateUserForOperation } from './validation.util.js';
+import { validateUserForOperation } from './userValidation.util.js';
 
 // ==========================================
 // USER QUERIES
