@@ -582,3 +582,28 @@ export function getUserForToken(user) {
 export function getSanitizedUser(user) {
     return sanitizeUser(user);
 }
+
+export default {
+    FindUserByEmail,
+    findUserById,
+    findUserByPhone,
+    createUser,
+    
+    setVerifyUser,
+    
+    getUserProfile,
+    updateUserProfile,
+    
+    updateUserBalance,
+    checkAndAlertLowBalance,
+    
+    getUserStatistics,
+    
+    suspendUser,
+    reactivateUser,
+    getAllUsers,
+    
+    getUserForTransaction,
+    getUserForToken,
+    getSanitizedUser
+};
