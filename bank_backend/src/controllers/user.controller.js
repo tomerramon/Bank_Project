@@ -4,7 +4,7 @@ import {
     getUserStatistics
 } from '../services/user.service.js';
 import Users from '../models/user.model.js';
-import { validateProfileInputs } from '../utils/validators.util.js';
+import { validateProfileInputs } from '../utils/inputValidation.util.js';
 import { centsToDollars } from '../utils/currency.util.js';
 
 /**

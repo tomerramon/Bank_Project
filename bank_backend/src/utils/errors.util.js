@@ -3,7 +3,7 @@
  *
  */
 
-import { HTTP_STATUS, ERROR_MESSAGES } from "../config/constants.config";
+import { HTTP_STATUS, ERROR_MESSAGES } from "../config/constants.config.js";
 
 /**
  * Base Application Error

@@ -5,7 +5,7 @@ import {
     getTransactionByReference,
     getUserBalance,
 } from '../services/transaction.service.js';
-import { validateTransferInputs } from '../utils/validators.util.js';
+import { validateTransferInputs } from '../utils/inputValidation.util.js';
 import { buildPaginationParams ,getUserTransactionStats} from '../utils/query.util.js';
 
 /**
