@@ -14,7 +14,7 @@ import {
     InvalidFormatError,
     InvalidAmountError
 } from './errors.util.js';
-import { VALIDATION, AUTH, CURRENCY } from '../config/constants.config.js';
+import { VALIDATION, AUTH, CURRENCY, VERIFICATION } from '../config/constants.config.js';
 
 // ==========================================
 // EMAIL VALIDATION

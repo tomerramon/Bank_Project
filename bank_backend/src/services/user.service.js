@@ -11,7 +11,7 @@
 import bcrypt from "bcryptjs";
 import Users from '../models/user.model.js';
 import Transactions from '../models/transaction.model.js';
-// import { centsToDollars } from '../utils/currency.util.js';
+import { centsToDollars } from '../utils/currency.util.js';
 import {
     EmailExistsError, PhoneExistsError,
     ValidationError, UserNotFoundError,
