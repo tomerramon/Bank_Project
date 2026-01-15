@@ -9,6 +9,7 @@ import {
     getBalanceController,
     getTransactionStatsController
 } from '../controllers/transaction.controller.js';
+import { transactionRateLimit } from '../middlewares/rateLimit.middleware.js';
 
 const router = Router();
 
@@ -16,7 +17,7 @@ const router = Router();
 router.use(authMiddleware);
 
 // Transfer money
-router.post('/transfer', transferController);
+router.post('/transfer', transactionRateLimit, transferController);
 
 // Get user's transaction history
 router.get('/', getTransactionsController);

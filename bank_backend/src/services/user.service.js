@@ -16,9 +16,12 @@ import {
     EmailExistsError, PhoneExistsError,
     ValidationError, UserNotFoundError,
 } from "../utils/errors.util.js";
-import { sendAccountVerifiedEmail, sendLowBalanceEmail, } from "../services/email.service.js";
-import { sendAccountVerifiedSMS, sendLowBalanceSMS, } from "../services/sms.service.js";
+import {
+    sendAccountVerifiedNotification,
+    sendLowBalanceNotification
+} from "./notification.service.js";
 import { sanitizeUser, sanitizeUserForToken } from "../utils/userValidation.util.js";
+import { getUserRecentTransactions } from "./transaction.service.js";
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
@@ -31,67 +34,34 @@ import { sanitizeUser, sanitizeUserForToken } from "../utils/userValidation.util
  * @throws {EmailExistsError|PhoneExistsError}
  */
 async function checkUserExists(email, phone) {
-        // Check email
-        const existingEmail = await Users.findOne({ email });
-        if (existingEmail) {
-            throw new EmailExistsError();
-        }
-
-        // Check phone
-        const existingPhone = await Users.findOne({ phone });
-        if (existingPhone) {
-            throw new PhoneExistsError();
-        }
+    const existingEmail = await Users.findOne({ email });
+    if (existingEmail) {
+        throw new EmailExistsError();
     }
 
-
-/**
- * Send notification asynchronously (fire and forget)
- * 
- * @param {Function} sendFunction - Notification function
- * @param {Array} args - Arguments for function
- * @param {string} description - Description for logging
- */
-function sendNotification(sendFunction, args, description) {
-    sendFunction(...args)
-        .then(() => console.log(`✅ ${description} sent`))
-        .catch(err => console.error(`❌ ${description} failed:`, err.message));
+    const existingPhone = await Users.findOne({ phone });
+    if (existingPhone) {
+        throw new PhoneExistsError();
+    }
 }
-
 
 // ============================================
 // USER FIND OPERATIONS
 // ============================================
-/**
- * Find user by email
- * 
- * @param {string} email - User email
- * @returns {Promise<Object|null>} - User document or null
- */
 export async function FindUserByEmail(email) {
     return await Users.findOne({ email });
 }
 
-/**
- * Find user by ID
- * 
- * @param {string} userId - User ID
- * @returns {Promise<Object|null>} - User document or null
- */
 export async function findUserById(userId) {
     return await Users.findById(userId)
         .select('email phone balance isVerified profile accountStatus createdAt');
 }
 
-/**
- * Find user by phone number
- * 
- * @param {string} phone - Phone number
- * @returns {Promise<Object|null>} - User document or null
- */
 export async function findUserByPhone(phone) {
-    return await Users.findOne({ phone });
+    return await Users.findOne({ phone })
+        .select('email phone isVerified accountStatus');
 }
+
 
 // ============================================
 // USER CREATION
@@ -106,11 +76,10 @@ export async function findUserByPhone(phone) {
  * @throws {ValidationError|EmailExistsError|PhoneExistsError}
  */
 export async function createUser(email, password, phone) {
-    // Validate required fields
     if (!email || !password || !phone) {
         throw new ValidationError("Email, password, and phone are required");
     }
-    // Check if user already exists
+
     await checkUserExists(email, phone);
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -121,6 +90,7 @@ export async function createUser(email, password, phone) {
             passwordHash: hashedPassword,
             phone,
         });
+
         console.log(`✅ User created: ${email} (ID: ${newUser._id})`);
 
         return {
@@ -134,7 +104,7 @@ export async function createUser(email, password, phone) {
         };
     }
     catch (error) {
-        // Handle MongoDB duplicate key errors (race condition)
+        // Handle MongoDB duplicate key errors
         if (error.code === 11000) {
             const field = Object.keys(error.keyPattern)[0];
             if (field === 'email') {
@@ -151,7 +121,6 @@ export async function createUser(email, password, phone) {
             throw new ValidationError(messages);
         }
 
-        // Re-throw unknown errors
         throw error;
     }
 }
@@ -180,20 +149,9 @@ export async function setVerifyUser(userId) {
 
     console.log(`✅ User verified: ${user.email}`);
 
+    // Send verification notification (async)
     const userName = user.profile?.firstName || 'there';
-
-    // Send verified notifications (async)
-    sendNotification(
-        sendAccountVerifiedEmail,
-        [user.email, userName],
-        'Account verified email'
-    );
-
-    sendNotification(
-        sendAccountVerifiedSMS,
-        [user.phone, userName],
-        'Account verified SMS'
-    );
+    sendAccountVerifiedNotification(user.email, user.phone, userName);
 
     return user;
 }
@@ -218,20 +176,7 @@ export async function getUserProfile(userId, lim = 10) {
     }
 
     // Get recent transactions
-    const recentTransactions = await Transactions.find({ userId })
-        .sort({ createdAt: -1 })
-        .limit(lim)
-        .populate('peerUserId', 'email')
-        .lean();
-
-    // Convert transaction amounts to dollars
-    const transactionsWithDollars = recentTransactions.map(t => ({
-        ...t,
-        amountInDollars: centsToDollars(t.amount),
-        formattedAmount: t.direction === 'T_IN'
-            ? `+$${centsToDollars(t.amount).toFixed(2)}`
-            : `-$${centsToDollars(t.amount).toFixed(2)}`
-    }));
+    const recentTransactions = await getUserRecentTransactions(userId, lim);
 
     return {
         id: user._id,
@@ -267,7 +212,6 @@ export async function updateUserProfile(userId, updates) {
         'profile.address.country',
         'profile.address.zipCode'
     ];
-
     // Filter to only allowed fields
     const approvedUpdates = {};
     Object.keys(updates).forEach(key => {
@@ -276,19 +220,14 @@ export async function updateUserProfile(userId, updates) {
         }
     });
 
-    // Check if any valid fields to update
     if (Object.keys(approvedUpdates).length === 0) {
         throw new ValidationError("No valid fields to update");
     }
 
-    // Update user
     const user = await Users.findByIdAndUpdate(
         userId,
         { $set: approvedUpdates },
-        {
-            new: true, // Return updated document
-            runValidators: true // Run schema validators
-        }
+        { new: true, runValidators: true }
     );
 
     if (!user) {
@@ -309,9 +248,6 @@ export async function updateUserProfile(userId, updates) {
 // BALANCE OPERATIONS
 // ============================================
 /**
- * Update user balance (internal use only)
- * This should only be called from transaction service
- * 
  * @param {string} userId - User ID
  * @param {number} amountInCents - Amount to add/subtract in cents
  * @param {Object} session - MongoDB session for transactions
@@ -319,7 +255,6 @@ export async function updateUserProfile(userId, updates) {
  * @throws {UserNotFoundError}
  */
 export async function updateUserBalance(userId, amountInCents, session = null) {
-
     const updateResult = await Users.updateOne(
         { _id: userId },
         { $inc: { balance: amountInCents } },
@@ -353,23 +288,10 @@ export async function checkAndAlertLowBalance(userId, thresholdDollars = 10) {
 
     // If balance is below threshold, send alerts
     if (balanceInDollars < thresholdDollars) {
-        const userName = user.profile?.firstName || 'there';
-
         console.log(`⚠️  Low balance alert for ${user.email}: $${balanceInDollars.toFixed(2)}`);
 
-        // Send email alert
-        sendNotification(
-            sendLowBalanceEmail,
-            [user.email, userName, balanceInDollars, thresholdDollars],
-            'Low balance email'
-        );
-
-        // Send SMS alert
-        sendNotification(
-            sendLowBalanceSMS,
-            [user.phone, balanceInDollars, thresholdDollars],
-            'Low balance SMS'
-        );
+        // Send notification (async)
+        sendLowBalanceNotification(user, balanceInDollars, thresholdDollars);
 
         return true;
     }
@@ -561,48 +483,29 @@ export async function getUserForTransaction(userId) {
     return user;
 }
 
-/**
- * Get sanitized user data for token
- * Used by auth.service.js
- * 
- * @param {Object} user - User document
- * @returns {Object} - Sanitized user data for JWT
- */
 export function getUserForToken(user) {
     return sanitizeUserForToken(user);
 }
 
-/**
- * Get sanitized user data for response
- * Used by controllers
- * 
- * @param {Object} user - User document
- * @returns {Object} - Sanitized user data
- */
 export function getSanitizedUser(user) {
     return sanitizeUser(user);
 }
+
 
 export default {
     FindUserByEmail,
     findUserById,
     findUserByPhone,
     createUser,
-    
     setVerifyUser,
-    
     getUserProfile,
     updateUserProfile,
-    
     updateUserBalance,
     checkAndAlertLowBalance,
-    
     getUserStatistics,
-    
     suspendUser,
     reactivateUser,
     getAllUsers,
-    
     getUserForTransaction,
     getUserForToken,
     getSanitizedUser

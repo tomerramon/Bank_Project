@@ -56,7 +56,7 @@ import {
     changePasswordController,
     testNotificationsController,
 } from "../controllers/auth.controller.js";
-
+import { authRateLimit } from '../middlewares/rateLimit.middleware.js';
 
 const router = Router();
 
@@ -72,7 +72,7 @@ const router = Router();
  * @body    { email, password, phone }
  * @returns { success, message, userId, devOTP? }
  */
-router.post('/signup', signupController);
+router.post('/signup', authRateLimit, signupController);
 
 /**
  * User Login
@@ -84,7 +84,7 @@ router.post('/signup', signupController);
  * @body    { email, password }
  * @returns { success, message, token, user }
  */
-router.post('/login', loginController);
+router.post('/login', authRateLimit, loginController);
 
 /**
  * Verify OTP Code
@@ -131,7 +131,7 @@ router.post('/refresh', refreshTokenController);
  * @body    { email }
  * @returns { success, message, devOTP? }
  */
-router.post('/forgot-password', forgotPasswordController);
+router.post('/forgot-password', authRateLimit, forgotPasswordController);
 
 /**
  * Reset Password with OTP
