@@ -4,10 +4,6 @@
  * All database operations go here.
  * Services call these functions - they never query directly.
  * 
- * Removed unused functions:
- * - getTransactionsByUserEmail (never used)
- * - updateMultBalances (never used)
- * - findUsersByIds (never used)
  */
 
 import Users from '../models/user.model.js';

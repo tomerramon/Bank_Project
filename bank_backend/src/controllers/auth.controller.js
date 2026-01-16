@@ -189,6 +189,7 @@ export async function loginController(req, res) {
 export async function refreshTokenController(req, res) {
     try {
         const oldToken = req.cookies?.refreshToken || req.body.refreshToken;
+
         if (!oldToken) {
             return res.status(401).json({
                 success: false,
