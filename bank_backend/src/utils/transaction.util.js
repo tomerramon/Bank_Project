@@ -12,61 +12,61 @@ import Transactions from '../models/transaction.model.js';
 import { CURRENCY } from '../config/constants.config.js';
 import { InvalidAmountError } from './errors.util.js';
 
-/**
- * Validate transfer amount
- * 
- * @param {number} amount - Amount in dollars
- * @returns {number} - Validated amount
- * @throws {InvalidAmountError}
- */
-export function validateTransferAmount(amount) {
-    amount = Number(amount);
+// /**
+//  * Validate transfer amount
+//  * 
+//  * @param {number} amount - Amount in dollars
+//  * @returns {number} - Validated amount
+//  * @throws {InvalidAmountError}
+//  */
+// export function validateTransferAmount(amount) {
+//     amount = Number(amount);
 
-    if (!Number.isFinite(amount) || amount < CURRENCY.MIN_TRANSFER_AMOUNT) {
-        throw new InvalidAmountError(
-            amount,
-            `minimum amount is $${CURRENCY.MIN_TRANSFER_AMOUNT}`
-        );
-    }
+//     if (!Number.isFinite(amount) || amount < CURRENCY.MIN_TRANSFER_AMOUNT) {
+//         throw new InvalidAmountError(
+//             amount,
+//             `minimum amount is $${CURRENCY.MIN_TRANSFER_AMOUNT}`
+//         );
+//     }
 
-    if (amount > CURRENCY.MAX_TRANSFER_AMOUNT) {
-        throw new InvalidAmountError(
-            amount,
-            `maximum is $${CURRENCY.MAX_TRANSFER_AMOUNT}`
-        );
-    }
+//     if (amount > CURRENCY.MAX_TRANSFER_AMOUNT) {
+//         throw new InvalidAmountError(
+//             amount,
+//             `maximum is $${CURRENCY.MAX_TRANSFER_AMOUNT}`
+//         );
+//     }
 
-    return amount;
-}
+//     return amount;
+// }
 
-/**
- * Create transaction records for both users
- * 
- * @param {string} fromUserId - Sender's ID
- * @param {string} toUserId - Receiver's ID
- * @param {number} amountInCents - Amount in cents
- * @param {string} reference - Transaction reference
- * @param {Object} session - MongoDB session
- * @returns {Promise<Array>} - Created transactions
- */
-export async function createTransactionRecords(fromUserId, toUserId, amountInCents, reference, session) {
-    return await Transactions.create([
-        {
-            userId: fromUserId,
-            peerUserId: toUserId,
-            amount: amountInCents,
-            direction: 'T_OUT',
-            reference,
-        },
-        {
-            userId: toUserId,
-            peerUserId: fromUserId,
-            amount: amountInCents,
-            direction: 'T_IN',
-            reference,
-        }
-    ], { session });
-}
+// /**
+//  * Create transaction records for both users
+//  * 
+//  * @param {string} fromUserId - Sender's ID
+//  * @param {string} toUserId - Receiver's ID
+//  * @param {number} amountInCents - Amount in cents
+//  * @param {string} reference - Transaction reference
+//  * @param {Object} session - MongoDB session
+//  * @returns {Promise<Array>} - Created transactions
+//  */
+// export async function createTransactionRecords(fromUserId, toUserId, amountInCents, reference, session) {
+//     return await Transactions.create([
+//         {
+//             userId: fromUserId,
+//             peerUserId: toUserId,
+//             amount: amountInCents,
+//             direction: 'T_OUT',
+//             reference,
+//         },
+//         {
+//             userId: toUserId,
+//             peerUserId: fromUserId,
+//             amount: amountInCents,
+//             direction: 'T_IN',
+//             reference,
+//         }
+//     ], { session });
+// }
 
 /**
  * Build transaction response data

@@ -10,7 +10,6 @@
 
 import bcrypt from "bcryptjs";
 import Users from '../models/user.model.js';
-import Transactions from '../models/transaction.model.js';
 import { centsToDollars } from '../utils/currency.util.js';
 import {
     EmailExistsError, PhoneExistsError,
@@ -20,8 +19,14 @@ import {
     sendAccountVerifiedNotification,
     sendLowBalanceNotification
 } from "./notification.service.js";
-import { sanitizeUser, sanitizeUserForToken } from "../utils/userValidation.util.js";
-import { getUserRecentTransactions } from "./transaction.service.js";
+import {
+    findUserById,
+    checkEmailExists,
+    checkPhoneExists,
+    setUserVerified
+} from "../utils/query.util.js";
+import { getRecentTransactions } from "./transaction.service.js";
+
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
@@ -34,34 +39,15 @@ import { getUserRecentTransactions } from "./transaction.service.js";
  * @throws {EmailExistsError|PhoneExistsError}
  */
 async function checkUserExists(email, phone) {
-    const existingEmail = await Users.findOne({ email });
-    if (existingEmail) {
+    // Check if user exists
+    if (await checkEmailExists(email)) {
         throw new EmailExistsError();
     }
 
-    const existingPhone = await Users.findOne({ phone });
-    if (existingPhone) {
+    if (await checkPhoneExists(phone)) {
         throw new PhoneExistsError();
     }
 }
-
-// ============================================
-// USER FIND OPERATIONS
-// ============================================
-export async function FindUserByEmail(email) {
-    return await Users.findOne({ email });
-}
-
-export async function findUserById(userId) {
-    return await Users.findById(userId)
-        .select('email phone balance isVerified profile accountStatus createdAt');
-}
-
-export async function findUserByPhone(phone) {
-    return await Users.findOne({ phone })
-        .select('email phone isVerified accountStatus');
-}
-
 
 // ============================================
 // USER CREATION
@@ -101,17 +87,14 @@ export async function createUser(email, password, phone) {
             isVerified: newUser.isVerified,
             accountStatus: newUser.accountStatus,
             createdAt: newUser.createdAt
-        };
+        }
     }
     catch (error) {
-        // Handle MongoDB duplicate key errors
+        // Handle MongoDB duplicate key errors (race condition)
         if (error.code === 11000) {
             const field = Object.keys(error.keyPattern)[0];
-            if (field === 'email') {
-                throw new EmailExistsError();
-            } else if (field === 'phone') {
-                throw new PhoneExistsError();
-            }
+            if (field === 'email') throw new EmailExistsError();
+            if (field === 'phone') throw new PhoneExistsError();
             throw new Error(`${field} is already in use`);
         }
 
@@ -136,12 +119,8 @@ export async function createUser(email, password, phone) {
  * @returns {Promise<Object>} - Updated user
  * @throws {UserNotFoundError}
  */
-export async function setVerifyUser(userId) {
-    const user = await Users.findByIdAndUpdate(
-        userId,
-        { $set: { isVerified: true } },
-        { new: true, runValidators: true }
-    );
+export async function verifyUser(userId) {
+    const user = await setUserVerified(userId);
 
     if (!user) {
         throw new UserNotFoundError();
@@ -149,7 +128,7 @@ export async function setVerifyUser(userId) {
 
     console.log(`✅ User verified: ${user.email}`);
 
-    // Send verification notification (async)
+    // Send notification (async)
     const userName = user.profile?.firstName || 'there';
     sendAccountVerifiedNotification(user.email, user.phone, userName);
 
@@ -176,7 +155,7 @@ export async function getUserProfile(userId, lim = 10) {
     }
 
     // Get recent transactions
-    const recentTransactions = await getUserRecentTransactions(userId, lim);
+    const transactionsWithDollars = await getRecentTransactions(userId, lim);
 
     return {
         id: user._id,
@@ -202,7 +181,6 @@ export async function getUserProfile(userId, lim = 10) {
  * @throws {UserNotFoundError|ValidationError}
  */
 export async function updateUserProfile(userId, updates) {
-    // Define allowed fields
     const allowedFields = [
         'profile.firstName',
         'profile.lastName',
@@ -212,6 +190,7 @@ export async function updateUserProfile(userId, updates) {
         'profile.address.country',
         'profile.address.zipCode'
     ];
+
     // Filter to only allowed fields
     const approvedUpdates = {};
     Object.keys(updates).forEach(key => {
@@ -248,27 +227,6 @@ export async function updateUserProfile(userId, updates) {
 // BALANCE OPERATIONS
 // ============================================
 /**
- * @param {string} userId - User ID
- * @param {number} amountInCents - Amount to add/subtract in cents
- * @param {Object} session - MongoDB session for transactions
- * @returns {Promise<Object>} - Update result
- * @throws {UserNotFoundError}
- */
-export async function updateUserBalance(userId, amountInCents, session = null) {
-    const updateResult = await Users.updateOne(
-        { _id: userId },
-        { $inc: { balance: amountInCents } },
-        { session }
-    );
-
-    if (updateResult.matchedCount === 0) {
-        throw new UserNotFoundError();
-    }
-
-    return updateResult;
-}
-
-/**
  * Check if user balance is low and send alert
  * Call this after transactions or periodically
  * 
@@ -276,9 +234,8 @@ export async function updateUserBalance(userId, amountInCents, session = null) {
  * @param {number} thresholdDollars - Alert threshold in dollars (default: 10)
  * @returns {Promise<boolean>} - true if alert sent
  */
-export async function checkAndAlertLowBalance(userId, thresholdDollars = 10) {
-    const user = await Users.findById(userId)
-        .select('email phone balance profile');
+export async function checkLowBalance(userId, thresholdDollars = 10) {
+    const user = await findUserById(userId);
 
     if (!user) {
         return false;
@@ -286,9 +243,8 @@ export async function checkAndAlertLowBalance(userId, thresholdDollars = 10) {
 
     const balanceInDollars = centsToDollars(user.balance);
 
-    // If balance is below threshold, send alerts
     if (balanceInDollars < thresholdDollars) {
-        console.log(`⚠️  Low balance alert for ${user.email}: $${balanceInDollars.toFixed(2)}`);
+        console.log(`⚠️  Low balance: ${user.email} - $${balanceInDollars.toFixed(2)}`);
 
         // Send notification (async)
         sendLowBalanceNotification(user, balanceInDollars, thresholdDollars);
@@ -299,214 +255,170 @@ export async function checkAndAlertLowBalance(userId, thresholdDollars = 10) {
     return false;
 }
 
-// ============================================
-// USER STATISTICS
-// ============================================
-/**
- * Get user statistics
- * Aggregates transaction data for analytics
- * 
- * @param {string} userId - User ID
- * @returns {Promise<Object>} - User statistics
- * @throws {UserNotFoundError}
- */
-export async function getUserStatistics(userId) {
-    const user = await Users.findById(userId);
+// // ============================================
+// // USER STATISTICS
+// // ============================================
+// /**
+//  * Get user statistics
+//  * Aggregates transaction data for analytics
+//  * 
+//  * @param {string} userId - User ID
+//  * @returns {Promise<Object>} - User statistics
+//  * @throws {UserNotFoundError}
+//  */
+// export async function getUserStatistics(userId) {
+//     const user = await Users.findById(userId);
 
-    if (!user) {
-        throw new UserNotFoundError();
-    }
+//     if (!user) {
+//         throw new UserNotFoundError();
+//     }
 
-    // Aggregate transaction statistics
-    const stats = await Transactions.aggregate([
-        { $match: { userId: user._id } },
-        {
-            $group: {
-                _id: '$direction',
-                count: { $sum: 1 },
-                totalAmount: { $sum: '$amount' }
-            }
-        }
-    ]);
+//     // Aggregate transaction statistics
+//     const stats = await Transactions.aggregate([
+//         { $match: { userId: user._id } },
+//         {
+//             $group: {
+//                 _id: '$direction',
+//                 count: { $sum: 1 },
+//                 totalAmount: { $sum: '$amount' }
+//             }
+//         }
+//     ]);
 
-    // Convert aggregation results to readable format
-    const statsMap = stats.reduce((acc, stat) => {
-        acc[stat._id] = {
-            count: stat.count,
-            totalAmount: centsToDollars(stat.totalAmount)
-        };
-        return acc;
-    }, {});
+//     // Convert aggregation results to readable format
+//     const statsMap = stats.reduce((acc, stat) => {
+//         acc[stat._id] = {
+//             count: stat.count,
+//             totalAmount: centsToDollars(stat.totalAmount)
+//         };
+//         return acc;
+//     }, {});
 
-    return {
-        userId: user._id,
-        email: user.email,
-        currentBalance: centsToDollars(user.balance),
-        statistics: {
-            sent: statsMap.T_OUT || { count: 0, totalAmount: 0 },
-            received: statsMap.T_IN || { count: 0, totalAmount: 0 }
-        },
-        accountCreated: user.createdAt
-    };
-}
+//     return {
+//         userId: user._id,
+//         email: user.email,
+//         currentBalance: centsToDollars(user.balance),
+//         statistics: {
+//             sent: statsMap.T_OUT || { count: 0, totalAmount: 0 },
+//             received: statsMap.T_IN || { count: 0, totalAmount: 0 }
+//         },
+//         accountCreated: user.createdAt
+//     };
+// }
 
-// ============================================
-// USER MANAGEMENT (ADMIN)
-// ============================================
-/**
- * Suspend user account (admin function)
- * 
- * @param {string} userId - User ID
- * @param {string} reason - Suspension reason
- * @returns {Promise<Object>} - Updated user
- * @throws {UserNotFoundError}
- */
-export async function suspendUser(userId, reason) {
-    const user = await Users.findByIdAndUpdate(
-        userId,
-        {
-            $set: {
-                accountStatus: 'suspended',
-                'profile.suspensionReason': reason
-            }
-        },
-        { new: true }
-    );
+// // ============================================
+// // USER MANAGEMENT (ADMIN)
+// // ============================================
+// /**
+//  * Suspend user account (admin function)
+//  * 
+//  * @param {string} userId - User ID
+//  * @param {string} reason - Suspension reason
+//  * @returns {Promise<Object>} - Updated user
+//  * @throws {UserNotFoundError}
+//  */
+// export async function suspendUser(userId, reason) {
+//     const user = await Users.findByIdAndUpdate(
+//         userId,
+//         {
+//             $set: {
+//                 accountStatus: 'suspended',
+//                 'profile.suspensionReason': reason
+//             }
+//         },
+//         { new: true }
+//     );
 
-    if (!user) {
-        throw new UserNotFoundError();
-    }
+//     if (!user) {
+//         throw new UserNotFoundError();
+//     }
 
-    console.log(`⚠️  User suspended: ${user.email} - Reason: ${reason}`);
+//     console.log(`⚠️  User suspended: ${user.email} - Reason: ${reason}`);
 
-    // TODO: Send suspension notification
-    // sendAccountSuspendedEmail(user.email, reason)
-    // sendAccountSuspendedSMS(user.phone)
+//     // TODO: Send suspension notification
+//     // sendAccountSuspendedEmail(user.email, reason)
+//     // sendAccountSuspendedSMS(user.phone)
 
-    return user;
-}
+//     return user;
+// }
 
-/**
- * Reactivate suspended user account
- * 
- * @param {string} userId - User ID
- * @returns {Promise<Object>} - Updated user
- * @throws {UserNotFoundError}
- */
-export async function reactivateUser(userId) {
-    const user = await Users.findByIdAndUpdate(
-        userId,
-        {
-            $set: { accountStatus: 'active' },
-            $unset: { 'profile.suspensionReason': '' }
-        },
-        { new: true }
-    );
+// /**
+//  * Reactivate suspended user account
+//  * 
+//  * @param {string} userId - User ID
+//  * @returns {Promise<Object>} - Updated user
+//  * @throws {UserNotFoundError}
+//  */
+// export async function reactivateUser(userId) {
+//     const user = await Users.findByIdAndUpdate(
+//         userId,
+//         {
+//             $set: { accountStatus: 'active' },
+//             $unset: { 'profile.suspensionReason': '' }
+//         },
+//         { new: true }
+//     );
 
-    if (!user) {
-        throw new UserNotFoundError();
-    }
+//     if (!user) {
+//         throw new UserNotFoundError();
+//     }
 
-    console.log(`✅ User reactivated: ${user.email}`);
+//     console.log(`✅ User reactivated: ${user.email}`);
 
-    // TODO: Send re-acticate notification
-    // sendAccountAEmail(user.email, reason)
-    // sendAccountSuspendedSMS(user.phone)
+//     // TODO: Send re-acticate notification
+//     // sendAccountAEmail(user.email, reason)
+//     // sendAccountSuspendedSMS(user.phone)
 
-    return user;
-}
+//     return user;
+// }
 
-/**
- * Get all users (admin function)
- * Should be paginated in production
- * 
- * @param {Object} options - Query options
- * @returns {Promise<Array>} - List of users
- */
-export async function getAllUsers(options = {}) {
-    const { page = 1, limit = 20, status = null } = options;
+// /**
+//  * Get all users (admin function)
+//  * Should be paginated in production
+//  * 
+//  * @param {Object} options - Query options
+//  * @returns {Promise<Array>} - List of users
+//  */
+// export async function getAllUsers(options = {}) {
+//     const { page = 1, limit = 20, status = null } = options;
 
-    const query = {};
-    if (status) {
-        query.accountStatus = status;
-    }
+//     const query = {};
+//     if (status) {
+//         query.accountStatus = status;
+//     }
 
-    const skip = (page - 1) * limit;
+//     const skip = (page - 1) * limit;
 
-    const [users, total] = await Promise.all([
-        Users.find(query)
-            .select('email balance isVerified accountStatus createdAt')
-            .skip(skip)
-            .limit(limit)
-            .lean(),
-        Users.countDocuments(query)
-    ]);
+//     const [users, total] = await Promise.all([
+//         Users.find(query)
+//             .select('email balance isVerified accountStatus createdAt')
+//             .skip(skip)
+//             .limit(limit)
+//             .lean(),
+//         Users.countDocuments(query)
+//     ]);
 
-    // Convert balances to dollars
-    const usersWithDollars = users.map(user => ({
-        ...user,
-        balance: centsToDollars(user.balance)
-    }));
+//     // Convert balances to dollars
+//     const usersWithDollars = users.map(user => ({
+//         ...user,
+//         balance: centsToDollars(user.balance)
+//     }));
 
-    return {
-        users: usersWithDollars,
-        pagination: {
-            page,
-            limit,
-            total,
-            totalPages: Math.ceil(total / limit)
-        }
-    };
-}
-
-
-// ============================================
-// INTEGRATION HELPERS
-// ============================================
-/**
- * Get user for transaction
- * Validates user is ready to transact
- * Used by transaction.service.js
- * 
- * @param {string} userId - User ID
- * @returns {Promise<Object>} - User document
- * @throws {UserNotFoundError}
- */
-export async function getUserForTransaction(userId) {
-    const user = await Users.findById(userId)
-        .select('email phone balance isVerified accountStatus profile');
-
-    if (!user) {
-        throw new UserNotFoundError();
-    }
-
-    return user;
-}
-
-export function getUserForToken(user) {
-    return sanitizeUserForToken(user);
-}
-
-export function getSanitizedUser(user) {
-    return sanitizeUser(user);
-}
-
+//     return {
+//         users: usersWithDollars,
+//         pagination: {
+//             page,
+//             limit,
+//             total,
+//             totalPages: Math.ceil(total / limit)
+//         }
+//     };
+// }
 
 export default {
-    FindUserByEmail,
-    findUserById,
-    findUserByPhone,
     createUser,
-    setVerifyUser,
+    verifyUser,
     getUserProfile,
     updateUserProfile,
-    updateUserBalance,
-    checkAndAlertLowBalance,
-    getUserStatistics,
-    suspendUser,
-    reactivateUser,
-    getAllUsers,
-    getUserForTransaction,
-    getUserForToken,
-    getSanitizedUser
+    checkLowBalance
 };

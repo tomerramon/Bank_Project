@@ -1,19 +1,30 @@
+/**
+ * Auth Controller - Handles authentication-related HTTP requests
+ * 
+ */
+
 import bcrypt from 'bcryptjs';
 import { AuthenticateUser, changePassword } from '../services/auth.service.js';
-import { createUser, setVerifyUser, findUserById, FindUserByEmail, } from '../services/user.service.js';
+import { createUser, verifyUser } from '../services/user.service.js';
 import { updateRefreshToken, invalidateRefreshToken } from '../services/token.service.js';
 import { generateOTP, verifyOTP, canRequestOTP } from '../services/otp.service.js';
 import {
     validateSignupInputs,
     validateLoginInputs,
-    validateOTP as validateOTPFormat,
+    validateOTP,
     validateEmail,
     validatePassword
-} from '../utils/inputValidation.util.js';
-import { sendOTPNotification, sendWelcomeNotification } from '../services/notification.service.js';
-import { ValidationError, UserNotFoundError } from '../utils/errors.util.js';
+} from '../utils/validation.util.js';
+import {
+    sendOTPNotification,
+    sendWelcomeNotification,
+    sendPasswordResetNotification,
+    sendPasswordChangedNotification
+} from '../services/notification.service.js';
+import { findUserByIdWithPassword, findUserById, findUserByEmail } from '../utils/query.util.js';
 import { setRefreshTokenCookie, clearRefreshTokenCookie } from '../utils/cookie.util.js';
 import { formatErrorResponse, formatSuccessResponse } from '../utils/response.util.js';
+import { ValidationError, UserNotFoundError } from '../utils/errors.util.js';
 
 
 // ============================================
@@ -34,7 +45,6 @@ export async function signupController(req, res) {
         const user = await createUser(email, password, phone);
         const otp = await generateOTP(user.id, 'EMAIL_VERIFICATION');
 
-        // Send notifications (async, non-blocking)
         sendOTPNotification(email, phone, otp);
 
         const msg = 'User created successfully. Check your email and phone for verification code.';
@@ -64,10 +74,8 @@ export async function verifyOTPController(req, res) {
             throw new ValidationError('userId, otp, and type are required');
         }
 
-        // Validate OTP format (6 digits)
-        validateOTPFormat(otp);
+        validateOTP(otp);
 
-        // Verify OTP code
         const isValid = await verifyOTP(userId, otp, type);
         if (!isValid) {
             return res.status(400).json({
@@ -76,14 +84,13 @@ export async function verifyOTPController(req, res) {
             });
         }
 
-        const user = await setVerifyUser(userId);
+        const user = await verifyUser(userId);
         const userName = user.profile?.firstName || 'there';
-
-        // Send welcome notifications (async)
-        sendWelcomeNotification(user.email, user.phone, userName);
 
         // Send verified notifications (async)
         sendAccountVerifiedNotification(user.email, user.phone, userName);
+        // Send welcome notifications (async)
+        sendWelcomeNotification(user.email, user.phone, userName);
 
         res.status(200).json(formatSuccessResponse('Email verified successfully. You can now log in.'));
 
@@ -123,10 +130,7 @@ export async function resendOTPController(req, res) {
             throw new UserNotFoundError();
         }
 
-        const userName = user.profile?.firstName || '';
-
-        // Send OTP notification
-        sendOTPNotification(user.email, user.phone, otp, userName);
+        sendOTPNotification(user.email, user.phone, otp);
 
         res.status(200).json(formatSuccessResponse('OTP resent successfully',
             ...(process.env.NODE_ENV === 'development' && { devOTP: otp }))
@@ -185,9 +189,11 @@ export async function loginController(req, res) {
 export async function refreshTokenController(req, res) {
     try {
         const oldToken = req.cookies?.refreshToken || req.body.refreshToken;
-
         if (!oldToken) {
-            return res.status(401).json(formatErrorResponse('Refresh token is missing'));
+            return res.status(401).json({
+                success: false,
+                message: 'Refresh token is missing'
+            });
         }
 
         // Generate new tokens (token rotation for security)
@@ -198,7 +204,10 @@ export async function refreshTokenController(req, res) {
         res.status(200).json(formatSuccessResponse('Token refreshed successfully', { token: tokens.token }));
 
     } catch (error) {
-        res.status(403).json(formatErrorResponse(error.message || 'Token refresh failed'));
+        res.status(403).json({
+            success: false,
+            message: error.message || 'Token refresh failed'
+        });
     }
 }
 
@@ -251,7 +260,7 @@ export async function forgotPasswordController(req, res) {
 
         validateEmail(email);
 
-        const user = await FindUserByEmail(email);
+        const user = await findUserByEmail(email);
 
         // Security: Always return success (don't reveal if email exists)
         if (!user) {
@@ -263,7 +272,6 @@ export async function forgotPasswordController(req, res) {
 
         // Send reset code
         sendPasswordResetNotification(user.email, user.phone, otp);
-
 
         res.status(200).json(formatSuccessResponse(
             'If that email exists, a reset code has been sent to your email and phone.',
@@ -306,9 +314,9 @@ export async function resetPasswordController(req, res) {
 
         validateEmail(email);
         validatePassword(newPassword);
-        validateOTPFormat(otp);
+        validateOTP(otp);
 
-        const user = await FindUserByEmail(email);
+        const user = await findUserByEmail(email);
         if (!user) {
             throw new UserNotFoundError();
         }
@@ -316,12 +324,13 @@ export async function resetPasswordController(req, res) {
         // Verify OTP
         const isValid = await verifyOTP(user._id, otp, 'PASSWORD_RESET');
         if (!isValid) {
-            return res.status(400).json(formatErrorResponse('Invalid or expired reset code'));
+            return res.status(400).json(formatErrorResponse(new Error('Invalid or expired reset code')));
         }
 
-        user.passwordHash = await bcrypt.hash(newPassword, 10);
-        user.refreshTokens = []; // Logout from all devices
-        await user.save();
+        const fullUser = await findUserByIdWithPassword(user._id)
+        fullUser.passwordHash = await bcrypt.hash(newPassword, 10);
+        fullUser.refreshTokens = [];
+        await fullUser.save();
 
         // Notify user of password change
         const userName = user.profile?.firstName || 'there';
@@ -366,17 +375,14 @@ export async function changePasswordController(req, res) {
             throw new ValidationError('Old password and new password are required');
         }
 
-        // Validate new password
         validatePassword(newPassword);
 
         if (oldPassword === newPassword) {
             throw new ValidationError('New password must be different from old password');
         }
 
-        // Change password
         await changePassword(userId, oldPassword, newPassword);
 
-        // Clear refresh token cookie (user needs to log in again)
         clearRefreshTokenCookie(res);
 
         res.status(200).json(formatSuccessResponse('Password changed successfully. Please log in again.'));

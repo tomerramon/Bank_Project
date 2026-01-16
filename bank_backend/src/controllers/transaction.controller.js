@@ -1,12 +1,19 @@
+/**
+ * Transaction Controller - Handles transaction-related HTTP requests
+ * 
+ */
+
 import {
     transferMoney,
     getUserTransactions,
-    getUserRecentTransactions,
+    getRecentTransactions,
     getTransactionByReference,
     getUserBalance,
+    getTransactionStats
 } from '../services/transaction.service.js';
-import { validateTransferInputs } from '../utils/inputValidation.util.js';
-import { buildPaginationParams ,getUserTransactionStats} from '../utils/query.util.js';
+import { validateTransferInputs } from '../utils/validations.util.js';
+import { buildPaginationParams } from '../utils/query.util.js';
+import { formatErrorResponse, formatSuccessResponse } from '../utils/response.util.js';
 
 /**
  * Transfer money to another user
@@ -20,24 +27,15 @@ export async function transferController(req, res) {
         const { toEmail, amount } = req.body;
         const fromUserId = req.user.id;
 
-        // Validate inputs using reusable validator
         validateTransferInputs({ toEmail, amount });
 
         // Execute transfer
         const result = await transferMoney(fromUserId, toEmail, amount);
 
-        res.status(200).json({
-            success: true,
-            message: 'Money transferred successfully',
-            data: result
-        });
+        res.status(200).json(formatSuccessResponse('Money transferred successfully', { data: result }));
     } catch (error) {
         const statusCode = error.statusCode || 400;
-        res.status(statusCode).json({
-            success: false,
-            message: error.message,
-            ...(error.details && { details: error.details })
-        });
+        res.status(statusCode).json(formatErrorResponse(error));
     }
 }
 
@@ -51,7 +49,7 @@ export async function transferController(req, res) {
 export async function getTransactionsController(req, res) {
     try {
         const userId = req.user.id;
-        
+
         // Build pagination and filter options
         const { page, limit } = buildPaginationParams(req.query);
         const { direction, startDate, endDate } = req.query;
@@ -66,17 +64,13 @@ export async function getTransactionsController(req, res) {
 
         const result = await getUserTransactions(userId, options);
 
-        res.status(200).json({
-            success: true,
+        res.status(200).json(formatSuccessResponse('Transactions retrieved successfully', {
             data: result.transactions,
             pagination: result.pagination
-        });
+        }));
     } catch (error) {
         const statusCode = error.statusCode || 500;
-        res.status(statusCode).json({
-            success: false,
-            message: error.message
-        });
+        res.status(statusCode).json(formatErrorResponse(error));
     }
 }
 
@@ -92,7 +86,7 @@ export async function getRecentTransactionsController(req, res) {
         const userId = req.user.id;
         const limit = Math.min(50, parseInt(req.query.limit) || 10);
 
-        const transactions = await getUserRecentTransactions(userId, limit);
+        const transactions = await getRecentTransactions(userId, limit);
 
         res.status(200).json({
             success: true,
@@ -100,10 +94,7 @@ export async function getRecentTransactionsController(req, res) {
         });
     } catch (error) {
         const statusCode = error.statusCode || 500;
-        res.status(statusCode).json({
-            success: false,
-            message: error.message
-        });
+        res.status(statusCode).json(formatErrorResponse(error));
     }
 }
 
@@ -120,8 +111,8 @@ export async function getTransactionByReferenceController(req, res) {
 
         const transactions = await getTransactionByReference(reference);
 
-        // Security: Only return transaction if user is involved
-        const userTransaction = transactions.find(t => 
+        // Security: Only return if user is involved
+        const userTransaction = transactions.find(t =>
             t.userId._id.toString() === userId
         );
 
@@ -138,10 +129,7 @@ export async function getTransactionByReferenceController(req, res) {
         });
     } catch (error) {
         const statusCode = error.statusCode || 404;
-        res.status(statusCode).json({
-            success: false,
-            message: error.message
-        });
+        res.status(statusCode).json(formatErrorResponse(error));
     }
 }
 
@@ -162,10 +150,7 @@ export async function getBalanceController(req, res) {
         });
     } catch (error) {
         const statusCode = error.statusCode || 500;
-        res.status(statusCode).json({
-            success: false,
-            message: error.message
-        });
+        res.status(statusCode).json(formatErrorResponse(error));
     }
 }
 
@@ -178,7 +163,7 @@ export async function getBalanceController(req, res) {
 export async function getTransactionStatsController(req, res) {
     try {
         const userId = req.user.id;
-        const stats = await getUserTransactionStats(userId);
+        const stats = await getTransactionStats(userId);
 
         res.status(200).json({
             success: true,
@@ -186,9 +171,16 @@ export async function getTransactionStatsController(req, res) {
         });
     } catch (error) {
         const statusCode = error.statusCode || 500;
-        res.status(statusCode).json({
-            success: false,
-            message: error.message
-        });
+        res.status(statusCode).json(formatErrorResponse(error));
     }
 }
+
+
+export default {
+    transferController,
+    getTransactionsController,
+    getRecentTransactionsController,
+    getTransactionByReferenceController,
+    getBalanceController,
+    getTransactionStatsController
+};

@@ -34,6 +34,10 @@ export const AUTH = {
     // Password requirements
     PASSWORD_MIN_LENGTH: 8,
     PASSWORD_REGEX: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
+    PASSWORD_REGEX_LOWER: /(?=.*[a-z])/,
+    PASSWORD_REGEX_UPPER: /(?=.*[A-Z])/,
+    PASSWORD_REGEX_NUMBER: /(?=.*\d)/,
+    PASSWORD_REGEX_SPECIAL: /(?=.*[@$!%*?&])/,
 
     // Account security
     MAX_LOGIN_ATTEMPTS: 5,

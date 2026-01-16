@@ -10,31 +10,29 @@
  */
 import mongoose from 'mongoose';
 import Users from '../models/user.model.js';
-import Transactions from '../models/transaction.model.js';
 import { dollarsToCents, centsToDollars } from '../utils/currency.util.js';
 import {
-    findActiveVerifiedUser,
-    findUserByEmail,
-    getRecentTransactions,
-    getUserTransactions as queryGetUserTransactions,
-} from '../utils/query.util.js'
-import { validateUserCanReceiveMoney, requireDifferentUsers } from '../utils/userValidation.util.js'
+    findActiveUser,
+    createTransactionPair,
+    findTransactionsByUser,
+    findRecentTransactions,
+    findTransactionByReference,
+    getTransactionStats
+} from '../utils/query.util.js';
+import { validateAmount, requireDifferentUsers, requireVerified, requireActive } from '../utils/validation.util.js';
 import {
     InsufficientFundsError,
-    UserNotFoundError,
+    UserNotFoundError
 } from '../utils/errors.util.js';
 import {
     sendTransactionNotification,
     sendTransactionFailedNotification,
     sendLargeTransactionAlert
-} from '../services/notification.service.js';
-import { checkAndAlertLowBalance } from './user.service.js';
-import {
-    validateTransferAmount,
-    buildTransactionData,
-    createTransactionRecords
-} from '../utils/transaction.util.js';
- import {getTransactionByReference as queryGetTransactionByReference} from "../utils/query.util.js"
+} from './notification.service.js';
+import { checkLowBalance } from './user.service.js';
+
+
+
 // ============================================
 // MONEY TRANSFER
 // ============================================
@@ -51,16 +49,16 @@ import {
  * @throws {InvalidAmountError|InsufficientFundsError|UserNotFoundError|SelfTransferError}
  */
 export const transferMoney = async (fromUserId, toEmail, amount) => {
-    const validatedAmount = validateTransferAmount(amount);
-    const amountInCents = dollarsToCents(validatedAmount);
+    validateAmount(amount);
+    const amountInCents = dollarsToCents(amount);
 
     // Start MongoDB transaction session
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        // Get sender and receiver
-        const sender = await findActiveVerifiedUser(fromUserId, session);
+        const sender = await findActiveUser(fromUserId, session);
+
         const receiver = await Users.findOne({ email: toEmail })
             .session(session)
             .select('_id email isVerified accountStatus balance phone');
@@ -68,27 +66,28 @@ export const transferMoney = async (fromUserId, toEmail, amount) => {
         if (!receiver) {
             throw new UserNotFoundError(toEmail);
         }
-        validateUserCanReceiveMoney(receiver);
-        requireDifferentUsers(sender._id, receiver._id, 'transfer');
 
+        requireVerified(receiver);
+        requireActive(receiver);
+        requireDifferentUsers(sender._id, receiver._id);
 
         // Check sufficient balance
         if (amountInCents > sender.balance) {
-            const senderBalanceDollars = centsToDollars(sender.balance);
+            const senderBalance = centsToDollars(sender.balance);
 
             // Notify sender of failure (async)
             setTimeout(() => {
                 sendTransactionFailedNotification(sender, {
                     reason: 'Insufficient funds',
-                    amount: validatedAmount,
+                    amount,
                     toEmail: receiver.email,
-                    currentBalance: senderBalanceDollars
+                    currentBalance: senderBalance
                 });
             }, 100);
 
             throw new InsufficientFundsError(
-                senderBalanceDollars.toFixed(2),
-                validatedAmount.toFixed(2)
+                senderBalance.toFixed(2),
+                amount.toFixed(2)
             );
         }
 
@@ -102,7 +101,7 @@ export const transferMoney = async (fromUserId, toEmail, amount) => {
         if (senderResult.matchedCount !== 1) {
             throw new InsufficientFundsError(
                 centsToDollars(sender.balance).toFixed(2),
-                validatedAmount.toFixed(2)
+                amount.toFixed(2)
             );
         }
 
@@ -112,13 +111,9 @@ export const transferMoney = async (fromUserId, toEmail, amount) => {
             { session }
         );
 
-        // Generate unique reference ID for this transfer
-        // Both transaction records share the same reference to link them
+        // Create transaction records
         const reference = new mongoose.Types.ObjectId().toString();
-
-        // Create transaction records for both users
-
-        const transactions = await createTransactionRecords(
+        const transactions = await createTransactionPair(
             fromUserId,
             receiver._id,
             amountInCents,
@@ -129,47 +124,57 @@ export const transferMoney = async (fromUserId, toEmail, amount) => {
         // Commit transaction, If we reach here, all operations succeeded
         await session.commitTransaction();
 
-        console.log(`✅ Transfer: ${sender.email} → ${receiver.email} ($${validatedAmount})`);
+        console.log(`✅ Transfer: ${sender.email} → ${receiver.email} ($${amount})`);
 
-        // Send notifications (async)
+        // Calculate new balances
         const senderBalance = centsToDollars(sender.balance - amountInCents);
         const receiverBalance = centsToDollars(receiver.balance + amountInCents);
 
+        // Send notifications (async)
         sendTransactionNotification(sender, {
             direction: 'T_OUT',
-            amount: validatedAmount,
+            amount,
             peerEmail: receiver.email,
             balance: senderBalance
         });
 
         sendTransactionNotification(receiver, {
             direction: 'T_IN',
-            amount: validatedAmount,
+            amount,
             peerEmail: sender.email,
             balance: receiverBalance
         });
 
-        // Check for large transaction alerts
-        if (validatedAmount >= 1000) {
-            sendLargeTransactionAlert(sender, validatedAmount, 'T_OUT');
-            sendLargeTransactionAlert(receiver, validatedAmount, 'T_IN');
+        // Large transaction alerts (if >= $1000)
+        if (amount >= 1000) {
+            sendLargeTransactionAlert(sender, amount, 'T_OUT');
+            sendLargeTransactionAlert(receiver, amount, 'T_IN');
         }
 
-        // Check for low balance alert (sender only)
-        checkAndAlertLowBalance(fromUserId, 10).catch(err =>
+        // Low balance check
+        checkLowBalance(fromUserId, 10).catch(err =>
             console.error('Low balance check failed:', err)
         );
 
-        // Return success response with all details
-        return buildTransactionData(
-            transactions,
-            sender,
-            receiver,
-            validatedAmount,
+        return {
+            success: true,
             reference,
+            amount,
+            from: sender.email,
+            to: receiver.email,
+            timestamp: transactions[0].createdAt,
             senderBalance,
-            receiverBalance
-        );
+            senderTransaction: {
+                id: transactions[0]._id,
+                direction: 'T_OUT',
+                amount: -amount
+            },
+            receiverTransaction: {
+                id: transactions[1]._id,
+                direction: 'T_IN',
+                amount: amount
+            }
+        };
     }
     catch (err) {
         await session.abortTransaction();
@@ -192,9 +197,8 @@ export const transferMoney = async (fromUserId, toEmail, amount) => {
  * @returns {Promise<Object>} - Transactions with pagination info
  */
 export async function getUserTransactions(userId, options = {}) {
-    const result = await queryGetUserTransactions(userId, options);
+    const result = await findTransactionsByUser(userId, options);
 
-    // Convert amounts to dollars
     result.transactions = result.transactions.map(t => ({
         ...t,
         amountInDollars: centsToDollars(t.amount),
@@ -213,10 +217,9 @@ export async function getUserTransactions(userId, options = {}) {
  * @param {number} limit - Number of transactions (default: 10)
  * @returns {Promise<Array>} - Recent transactions
  */
-export async function getUserRecentTransactions(userId, limit = 10) {
-    const transactions = await getRecentTransactions(userId, limit);
+export async function getRecentTransactions(userId, limit = 10) {
+    const transactions = await findRecentTransactions(userId, limit);
 
-    // Convert amounts to dollars
     return transactions.map(t => ({
         ...t,
         amountInDollars: centsToDollars(t.amount),
@@ -224,21 +227,6 @@ export async function getUserRecentTransactions(userId, limit = 10) {
             ? `+$${centsToDollars(t.amount).toFixed(2)}`
             : `-$${centsToDollars(t.amount).toFixed(2)}`
     }));
-}
-
-/**
- * Get transactions by user email
- * 
- * @param {string} email - User's email address
- * @returns {Promise<Object>} - Transactions with pagination
- * @throws {UserNotFoundError}
- */
-export async function getTransactionsByUserEmail(email) {
-    const user = await findUserByEmail(email);
-    if (!user) {
-        throw new UserNotFoundError(email);
-    }
-    return getUserTransactions(user._id);
 }
 
 /**
@@ -250,13 +238,12 @@ export async function getTransactionsByUserEmail(email) {
  * @throws {UserNotFoundError}
  */
 export async function getTransactionByReference(reference) {
-    const transactions = await queryGetTransactionByReference(reference);
+    const transactions = await findTransactionByReference(reference);
 
     if (!transactions || transactions.length === 0) {
         throw new UserNotFoundError('Transaction not found');
     }
 
-    // Convert amounts to dollars
     return transactions.map(t => ({
         ...t,
         amountInDollars: centsToDollars(t.amount),
@@ -288,7 +275,7 @@ export async function getUserBalance(userId) {
 }
 
 // ============================================
-// TRANSACTION STATISTICS
+// STATISTICS
 // ============================================
 /**
  * Get user's transaction statistics
@@ -297,17 +284,8 @@ export async function getUserBalance(userId) {
  * @param {string} userId - User's ID
  * @returns {Promise<Object>} - Transaction statistics
  */
-export async function getUserTransactionStats(userId) {
-    const stats = await Transactions.aggregate([
-        { $match: { userId: new mongoose.Types.ObjectId(userId) } },
-        {
-            $group: {
-                _id: '$direction',
-                count: { $sum: 1 },
-                totalAmount: { $sum: '$amount' }
-            }
-        }
-    ]);
+export async function getTransactionStats(userId) {
+    const stats = await getTransactionStats(userId);
 
     const result = {
         sent: { count: 0, total: 0 },
@@ -331,133 +309,11 @@ export async function getUserTransactionStats(userId) {
     return result;
 }
 
-/**
- * Get transaction summary for date range
- * 
- * @param {string} userId - User's ID
- * @param {Date} startDate - Start date
- * @param {Date} endDate - End date
- * @returns {Promise<Object>} - Transaction summary
- */
-export async function getTransactionSummary(userId, startDate, endDate) {
-    const query = {
-        userId: new mongoose.Types.ObjectId(userId),
-        createdAt: { $gte: startDate, $lte: endDate }
-    };
-
-    const summary = await Transactions.aggregate([
-        { $match: query },
-        {
-            $group: {
-                _id: '$direction',
-                count: { $sum: 1 },
-                totalAmount: { $sum: '$amount' },
-                avgAmount: { $avg: '$amount' }
-            }
-        }
-    ]);
-
-    const result = {
-        period: { start: startDate, end: endDate },
-        sent: { count: 0, total: 0, average: 0 },
-        received: { count: 0, total: 0, average: 0 }
-    };
-
-    summary.forEach(stat => {
-        if (stat._id === 'T_OUT') {
-            result.sent = {
-                count: stat.count,
-                total: centsToDollars(stat.totalAmount),
-                average: centsToDollars(stat.avgAmount)
-            };
-        } else if (stat._id === 'T_IN') {
-            result.received = {
-                count: stat.count,
-                total: centsToDollars(stat.totalAmount),
-                average: centsToDollars(stat.avgAmount)
-            };
-        }
-    });
-
-    return result;
-}
-
-
-// ============================================
-// VALIDATION HELPERS
-// ============================================
-/**
- * Validate transfer before executing
- * Used for pre-validation in UI
- * 
- * @param {string} fromUserId - Sender's ID
- * @param {string} toEmail - Receiver's email
- * @param {number} amount - Amount in dollars
- * @returns {Promise<Object>} - Validation result
- */
-export async function validateTransfer(fromUserId, toEmail, amount) {
-    try {
-        const validatedAmount = validateTransferAmount(amount);
-        const amountInCents = dollarsToCents(validatedAmount)
-
-        const sender = await Users.findById(fromUserId)
-            .select('email balance isVerified accountStatus');
-
-        if (!sender) {
-            return { valid: false, error: 'Sender not found' };
-        }
-
-        const receiver = await Users.findOne({ email: toEmail })
-            .select('email isVerified accountStatus');
-
-        if (!receiver) {
-            return { valid: false, error: 'Receiver not found' };
-        }
-
-        if (sender._id.equals(receiver._id)) {
-            return { valid: false, error: 'Cannot transfer to yourself' };
-        }
-
-        if (!sender.isVerified) {
-            return { valid: false, error: 'Sender account not verified' };
-        }
-
-        if (!receiver.isVerified) {
-            return { valid: false, error: 'Receiver account not verified' };
-        }
-
-        if (amountInCents > sender.balance) {
-            return {
-                valid: false,
-                error: 'Insufficient funds',
-                balance: centsToDollars(sender.balance),
-                required: validatedAmount
-            };
-        }
-
-        return {
-            valid: true,
-            sender: {
-                email: sender.email,
-                currentBalance: centsToDollars(sender.balance),
-                balanceAfter: centsToDollars(sender.balance - amountInCents)
-            },
-            receiver: { email: receiver.email },
-            amount: validatedAmount
-        };
-    } catch (error) {
-        return { valid: false, error: error.message };
-    }
-}
-
 export default {
     transferMoney,
-    validateTransfer,
     getUserTransactions,
-    getUserRecentTransactions,
-    getTransactionsByUserEmail,
+    getRecentTransactions,
     getTransactionByReference,
     getUserBalance,
-    getUserTransactionStats,
-    getTransactionSummary
+    getTransactionStats
 };
