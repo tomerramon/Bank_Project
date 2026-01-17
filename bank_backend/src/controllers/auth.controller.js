@@ -19,7 +19,8 @@ import {
     sendOTPNotification,
     sendWelcomeNotification,
     sendPasswordResetNotification,
-    sendPasswordChangedNotification
+    sendPasswordChangedNotification,
+    sendAccountVerifiedNotification
 } from '../services/notification.service.js';
 import { findUserByIdWithPassword, findUserById, findUserByEmail } from '../utils/query.util.js';
 import { setRefreshTokenCookie, clearRefreshTokenCookie } from '../utils/cookie.util.js';
@@ -45,11 +46,16 @@ export async function signupController(req, res) {
         const user = await createUser(email, password, phone);
         const otp = await generateOTP(user.id, 'EMAIL_VERIFICATION');
 
-        sendOTPNotification(email, phone, otp);
+        // Pass full user object to notification service
+        sendOTPNotification(user, otp);
 
-        const msg = 'User created successfully. Check your email and phone for verification code.';
-        res.status(201).json(formatSuccessResponse(msg, { userId: user.id, ...(process.env.NODE_ENV === 'development' && { devOTP: otp }) }));
-
+        res.status(201).json(formatSuccessResponse(
+            'User created successfully. Check your email and phone for verification code.',
+            {
+                userId: user.id,
+                ...(process.env.NODE_ENV === 'development' && { devOTP: otp })
+            }
+        ));
     } catch (error) {
         const statusCode = error.statusCode || 400;
         res.status(statusCode).json(formatErrorResponse(error));
@@ -78,22 +84,20 @@ export async function verifyOTPController(req, res) {
 
         const isValid = await verifyOTP(userId, otp, type);
         if (!isValid) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid or expired OTP. Please request a new code.'
-            });
+            return res.status(400).json(formatErrorResponse(
+                new ValidationError('Invalid or expired OTP. Please request a new code.')
+            ));
         }
 
         const user = await verifyUser(userId);
         const userName = user.profile?.firstName || 'there';
 
         // Send verified notifications (async)
-        sendAccountVerifiedNotification(user.email, user.phone, userName);
+        sendAccountVerifiedNotification(user, userName);
         // Send welcome notifications (async)
-        sendWelcomeNotification(user.email, user.phone, userName);
+        sendWelcomeNotification(user, userName);
 
         res.status(200).json(formatSuccessResponse('Email verified successfully. You can now log in.'));
-
     } catch (error) {
         const statusCode = error.statusCode || 400;
         res.status(statusCode).json(formatErrorResponse(error));
@@ -118,10 +122,9 @@ export async function resendOTPController(req, res) {
 
         const canRequest = await canRequestOTP(userId, type);
         if (!canRequest) {
-            return res.status(429).json({
-                success: false,
-                message: 'Too many OTP requests. Please wait before requesting again.'
-            });
+            return res.status(429).json(formatErrorResponse(
+                new Error('Too many OTP requests. Please wait before requesting again.')
+            ));
         }
 
         const otp = await generateOTP(userId, type);
@@ -130,12 +133,13 @@ export async function resendOTPController(req, res) {
             throw new UserNotFoundError();
         }
 
-        sendOTPNotification(user.email, user.phone, otp);
+        // Pass full user object
+        sendOTPNotification(user, otp);
 
-        res.status(200).json(formatSuccessResponse('OTP resent successfully',
-            ...(process.env.NODE_ENV === 'development' && { devOTP: otp }))
-        );
-
+        res.status(200).json(formatSuccessResponse(
+            'OTP resent successfully',
+            { ...(process.env.NODE_ENV === 'development' && { devOTP: otp }) }
+        ));
     } catch (error) {
         const statusCode = error.statusCode || 400;
         res.status(statusCode).json(formatErrorResponse(error));
@@ -191,10 +195,9 @@ export async function refreshTokenController(req, res) {
         const oldToken = req.cookies?.refreshToken || req.body.refreshToken;
 
         if (!oldToken) {
-            return res.status(401).json({
-                success: false,
-                message: 'Refresh token is missing'
-            });
+            return res.status(401).json(formatErrorResponse(
+                new Error('Refresh token is missing')
+            ));
         }
 
         // Generate new tokens (token rotation for security)
@@ -202,13 +205,12 @@ export async function refreshTokenController(req, res) {
 
         setRefreshTokenCookie(res, tokens.refreshToken);
 
-        res.status(200).json(formatSuccessResponse('Token refreshed successfully', { token: tokens.token }));
-
+        res.status(200).json(formatSuccessResponse(
+            'Token refreshed successfully',
+            { token: tokens.token }
+        ));
     } catch (error) {
-        res.status(403).json({
-            success: false,
-            message: error.message || 'Token refresh failed'
-        });
+        res.status(403).json(formatErrorResponse(error));
     }
 }
 
@@ -263,16 +265,17 @@ export async function forgotPasswordController(req, res) {
 
         const user = await findUserByEmail(email);
 
-        // Security: Always return success (don't reveal if email exists)
+        // Security: Always return success
         if (!user) {
-            return res.status(200).json(formatSuccessResponse('If that email exists, a reset code has been sent.'));
+            return res.status(200).json(formatSuccessResponse(
+                'If that email exists, a reset code has been sent.'
+            ));
         }
 
-        // Generate OTP for password reset
         const otp = await generateOTP(user._id, 'PASSWORD_RESET', 10);
 
-        // Send reset code
-        sendPasswordResetNotification(user.email, user.phone, otp);
+        // Pass full user object
+        sendPasswordResetNotification(user, otp);
 
         res.status(200).json(formatSuccessResponse(
             'If that email exists, a reset code has been sent to your email and phone.',
@@ -322,10 +325,11 @@ export async function resetPasswordController(req, res) {
             throw new UserNotFoundError();
         }
 
-        // Verify OTP
         const isValid = await verifyOTP(user._id, otp, 'PASSWORD_RESET');
         if (!isValid) {
-            return res.status(400).json(formatErrorResponse(new Error('Invalid or expired reset code')));
+            return res.status(400).json(formatErrorResponse(
+                new ValidationError('Invalid or expired reset code')
+            ));
         }
 
         const fullUser = await findUserByIdWithPassword(user._id)
@@ -333,12 +337,12 @@ export async function resetPasswordController(req, res) {
         fullUser.refreshTokens = [];
         await fullUser.save();
 
-        // Notify user of password change
         const userName = user.profile?.firstName || 'there';
-        sendPasswordChangedNotification(user.email, user.phone, userName);
+        sendPasswordChangedNotification(user, userName);
 
-        res.status(200).json(formatSuccessResponse('Password reset successfully. Please log in with your new password.'));
-
+        res.status(200).json(formatSuccessResponse(
+            'Password reset successfully. Please log in with your new password.'
+        ));
     } catch (error) {
         const statusCode = error.statusCode || 400;
         res.status(statusCode).json(formatErrorResponse(error));
@@ -386,8 +390,9 @@ export async function changePasswordController(req, res) {
 
         clearRefreshTokenCookie(res);
 
-        res.status(200).json(formatSuccessResponse('Password changed successfully. Please log in again.'));
-
+        res.status(200).json(formatSuccessResponse(
+            'Password changed successfully. Please log in again.'
+        ));
     } catch (error) {
         const statusCode = error.statusCode || 400;
         res.status(statusCode).json(formatErrorResponse(error));
@@ -418,10 +423,9 @@ export async function changePasswordController(req, res) {
  */
 export async function testNotificationsController(req, res) {
     if (process.env.NODE_ENV !== 'development') {
-        return res.status(403).json({
-            success: false,
-            message: 'This endpoint is only available in development mode'
-        });
+        return res.status(403).json(formatErrorResponse(
+            new Error('This endpoint is only available in development mode')
+        ));
     }
 
     try {
@@ -459,16 +463,9 @@ export async function testNotificationsController(req, res) {
             }
         }
 
-        res.status(200).json({
-            success: true,
-            message: 'Test completed',
-            results
-        });
+        res.status(200).json(formatSuccessResponse('Test completed', results));
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        res.status(500).json(formatErrorResponse(error));
     }
 }
 

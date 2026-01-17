@@ -13,7 +13,7 @@ import {
 } from '../services/transaction.service.js';
 import { validateTransferInputs } from '../utils/validations.util.js';
 import { buildPaginationParams } from '../utils/query.util.js';
-import { formatErrorResponse, formatSuccessResponse } from '../utils/response.util.js';
+import { formatErrorResponse, formatSuccessResponse, formatPaginatedResponse } from '../utils/response.util.js';
 
 /**
  * Transfer money to another user
@@ -29,10 +29,9 @@ export async function transferController(req, res) {
 
         validateTransferInputs({ toEmail, amount });
 
-        // Execute transfer
         const result = await transferMoney(fromUserId, toEmail, amount);
 
-        res.status(200).json(formatSuccessResponse('Money transferred successfully', { data: result }));
+        res.status(200).json(formatSuccessResponse('Money transferred successfully', result));
     } catch (error) {
         const statusCode = error.statusCode || 400;
         res.status(statusCode).json(formatErrorResponse(error));
@@ -50,7 +49,6 @@ export async function getTransactionsController(req, res) {
     try {
         const userId = req.user.id;
 
-        // Build pagination and filter options
         const { page, limit } = buildPaginationParams(req.query);
         const { direction, startDate, endDate } = req.query;
 
@@ -64,10 +62,7 @@ export async function getTransactionsController(req, res) {
 
         const result = await getUserTransactions(userId, options);
 
-        res.status(200).json(formatSuccessResponse('Transactions retrieved successfully', {
-            data: result.transactions,
-            pagination: result.pagination
-        }));
+        res.status(200).json(formatPaginatedResponse(result.transactions, result.pagination));
     } catch (error) {
         const statusCode = error.statusCode || 500;
         res.status(statusCode).json(formatErrorResponse(error));
@@ -88,10 +83,7 @@ export async function getRecentTransactionsController(req, res) {
 
         const transactions = await getRecentTransactions(userId, limit);
 
-        res.status(200).json({
-            success: true,
-            data: transactions
-        });
+        res.status(200).json(formatSuccessResponse('Recent transactions retrieved successfully', transactions));
     } catch (error) {
         const statusCode = error.statusCode || 500;
         res.status(statusCode).json(formatErrorResponse(error));
@@ -117,16 +109,12 @@ export async function getTransactionByReferenceController(req, res) {
         );
 
         if (!userTransaction) {
-            return res.status(403).json({
-                success: false,
-                message: 'You are not authorized to view this transaction'
-            });
+            return res.status(403).json(formatErrorResponse(
+                new Error('You are not authorized to view this transaction')
+            ));
         }
 
-        res.status(200).json({
-            success: true,
-            data: transactions
-        });
+        res.status(200).json(formatSuccessResponse('Transaction retrieved successfully', transactions));
     } catch (error) {
         const statusCode = error.statusCode || 404;
         res.status(statusCode).json(formatErrorResponse(error));
@@ -144,10 +132,7 @@ export async function getBalanceController(req, res) {
         const userId = req.user.id;
         const balance = await getUserBalance(userId);
 
-        res.status(200).json({
-            success: true,
-            balance: balance
-        });
+        res.status(200).json(formatSuccessResponse('Balance retrieved successfully', { balance }));
     } catch (error) {
         const statusCode = error.statusCode || 500;
         res.status(statusCode).json(formatErrorResponse(error));
@@ -165,16 +150,12 @@ export async function getTransactionStatsController(req, res) {
         const userId = req.user.id;
         const stats = await getTransactionStats(userId);
 
-        res.status(200).json({
-            success: true,
-            data: stats
-        });
+        res.status(200).json(formatSuccessResponse('Statistics retrieved successfully', stats));
     } catch (error) {
         const statusCode = error.statusCode || 500;
         res.status(statusCode).json(formatErrorResponse(error));
     }
 }
-
 
 export default {
     transferController,
