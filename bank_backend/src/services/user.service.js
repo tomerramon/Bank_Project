@@ -23,9 +23,11 @@ import {
     findUserById,
     checkEmailExists,
     checkPhoneExists,
-    setUserVerified
+    setUserVerified,
+    updateNotificationPreferences as updateNotificationPrefsQuery,
 } from "../utils/query.util.js";
 import { getRecentTransactions } from "./transaction.service.js";
+import { validateNotificationPreferences } from "../utils/validations.util.js";
 
 // ============================================
 // HELPER FUNCTIONS
@@ -79,6 +81,7 @@ export async function createUser(email, password, phone) {
 
         console.log(`✅ User created: ${email} (ID: ${newUser._id})`);
 
+
         return {
             id: newUser._id,
             email: newUser.email,
@@ -86,11 +89,10 @@ export async function createUser(email, password, phone) {
             balance: newUser.balance,
             isVerified: newUser.isVerified,
             accountStatus: newUser.accountStatus,
+            notificationPreferences: newUser.notificationPreferences,
             createdAt: newUser.createdAt
-        }
-    }
-    catch (error) {
-        // Handle MongoDB duplicate key errors (race condition)
+        };
+    } catch (error) {
         if (error.code === 11000) {
             const field = Object.keys(error.keyPattern)[0];
             if (field === 'email') throw new EmailExistsError();
@@ -98,7 +100,6 @@ export async function createUser(email, password, phone) {
             throw new Error(`${field} is already in use`);
         }
 
-        // Handle Mongoose validation errors
         if (error.name === 'ValidationError') {
             const messages = Object.values(error.errors).map(e => e.message);
             throw new ValidationError(messages);
@@ -128,9 +129,8 @@ export async function verifyUser(userId) {
 
     console.log(`✅ User verified: ${user.email}`);
 
-    // Send notification (async)
     const userName = user.profile?.firstName || 'there';
-    sendAccountVerifiedNotification(user.email, user.phone, userName);
+    sendAccountVerifiedNotification(user, userName);
 
     return user;
 }
@@ -148,16 +148,15 @@ export async function verifyUser(userId) {
  * @throws {UserNotFoundError}
  */
 export async function getUserProfile(userId, lim = 10) {
-    const user = await Users.findById(userId);
+    const user = await findUserById(userId);
 
     if (!user) {
         throw new UserNotFoundError();
     }
-
     // Get recent transactions
     const transactionsWithDollars = await getRecentTransactions(userId, lim);
 
-    return {
+ return {
         id: user._id,
         email: user.email,
         phone: user.phone,
@@ -166,6 +165,7 @@ export async function getUserProfile(userId, lim = 10) {
         isVerified: user.isVerified,
         accountStatus: user.accountStatus,
         profile: user.profile,
+        notificationPreferences: user.notificationPreferences,
         createdAt: user.createdAt,
         recentTransactions: transactionsWithDollars
     };
@@ -181,7 +181,7 @@ export async function getUserProfile(userId, lim = 10) {
  * @throws {UserNotFoundError|ValidationError}
  */
 export async function updateUserProfile(userId, updates) {
-    const allowedFields = [
+     const allowedFields = [
         'profile.firstName',
         'profile.lastName',
         'profile.dateOfBirth',
@@ -246,7 +246,6 @@ export async function checkLowBalance(userId, thresholdDollars = 10) {
     if (balanceInDollars < thresholdDollars) {
         console.log(`⚠️  Low balance: ${user.email} - $${balanceInDollars.toFixed(2)}`);
 
-        // Send notification (async)
         sendLowBalanceNotification(user, balanceInDollars, thresholdDollars);
 
         return true;
@@ -254,6 +253,36 @@ export async function checkLowBalance(userId, thresholdDollars = 10) {
 
     return false;
 }
+
+// ==========================================
+// NOTIFICATION PREFERENCES
+// ==========================================
+
+/**
+ * Update notification preferences
+ * 
+ * @param {string} userId - User's ID
+ * @param {Object} preferences - { email: boolean, sms: boolean }
+ * @returns {Promise<Object>} - Updated preferences
+ */
+export async function updateNotificationPreferences(userId, preferences) {
+    // Validate preferences
+    validateNotificationPreferences(preferences);
+
+    const user = await updateNotificationPrefsQuery(userId, preferences);
+
+    if (!user) {
+        throw new UserNotFoundError();
+    }
+
+    console.log(`✅ Notification preferences updated for: ${user.email}`);
+
+    return {
+        email: user.email,
+        notificationPreferences: user.notificationPreferences
+    };
+}
+
 
 // // ============================================
 // // USER STATISTICS
@@ -420,5 +449,6 @@ export default {
     verifyUser,
     getUserProfile,
     updateUserProfile,
+    updateNotificationPreferences,
     checkLowBalance
 };

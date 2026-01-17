@@ -6,6 +6,7 @@ import { Router } from 'express';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
 import {
     getUserProfileController,
+    updateNotificationPreferencesController,
     updateUserProfileController,
 } from '../controllers/user.controller.js';
 
@@ -19,5 +20,8 @@ router.get('/me', getUserProfileController);
 
 // Update current user's profile
 router.patch('/me', updateUserProfileController);
+
+// Update notification preferences
+router.patch('/me/notifications', updateNotificationPreferencesController);
 
 export default router;

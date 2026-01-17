@@ -114,6 +114,30 @@ export function validateOTP(otp) {
     return true;
 }
 
+export function validateNotificationPreferences(preferences) {
+    if (typeof preferences !== 'object') {
+        throw new ValidationError('Preferences must be an object');
+    }
+
+    // Ensure at least one field is provided
+    if (preferences.email === undefined && preferences.sms === undefined) {
+        throw new ValidationError('At least one preference (email or sms) must be specified');
+    }
+
+    // Ensure values are boolean
+    if (preferences.email !== undefined && typeof preferences.email !== 'boolean') {
+        throw new ValidationError('Email preference must be true or false');
+    }
+
+    if (preferences.sms !== undefined && typeof preferences.sms !== 'boolean') {
+        throw new ValidationError('SMS preference must be true or false');
+    }
+    // Prevent disabling both (users must receive notifications)
+    if (preferences.email === false && preferences.sms === false) {
+        throw new ValidationError('You must enable at least one notification method');
+    }
+}
+
 // ==========================================
 // COMPOSITE VALIDATORS (for controllers)
 // ==========================================
@@ -240,6 +264,7 @@ export default {
     validatePhone,
     validateAmount,
     validateOTP,
+    validateNotificationPreferences,
 
     // Composite validators
     validateSignupInputs,
