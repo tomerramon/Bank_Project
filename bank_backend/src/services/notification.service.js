@@ -2,7 +2,8 @@
  * Notification Service - SINGLE SOURCE OF TRUTH
  * 
  * All email/SMS sending goes through here.
- * 
+ * Respects user notification preferences (email/SMS).
+ * Users can choose to receive notifications via email, SMS, or both.
  */
 
 import {
@@ -35,42 +36,117 @@ async function sendAsync(fn, args, description) {
         .catch(err => console.error(`❌ ${description} failed:`, err.message));
 }
 
+/**
+ * Check if user wants email notifications
+ * 
+ * @param {Object} user - User object or document
+ * @returns {Promise<void>} - true if email notifications are enabled
+ */
+function wantsEmail(user) {
+    // If user object has the method, use it
+    if (typeof user.wantsEmailNotifications === 'function') {
+        return user.wantsEmailNotifications();
+    }
+    // Otherwise check the field directly (for plain objects from queries)
+    return user.notificationPreferences?.email !== false; // Default true
+}
+
+/**
+ * Check if user wants SMS notifications
+ * 
+ * @param {Object} user - User object or document
+ * @returns {Promise<void>} - true if SMS notifications are enabled
+ */
+function wantsSMS(user) {
+    // If user object has the method, use it
+    if (typeof user.wantsSMSNotifications === 'function') {
+        return user.wantsSMSNotifications();
+    }
+    // Otherwise check the field directly
+    return user.notificationPreferences?.sms !== false; // Default true
+}
+
 // ============================================
 // OTP NOTIFICATIONS
 // ============================================
 
-export async function sendOTPNotification(email, phone, otp, userName = '') {
-    sendAsync(sendOTPEmail, [email, otp, userName], 'OTP email');
-    sendAsync(sendOTPSMS, [phone, otp], 'OTP SMS');
+/**
+ * Send OTP notification
+ * Respects user preferences
+ * 
+ * @param {Object} user - User object with email, phone, notificationPreferences
+ * @param {string} otp - OTP code
+ * @param {string} userName - User's name (optional)
+ */
+export async function sendOTPNotification(user, otp, userName = '') {
+    if (wantsEmail(user)) {
+        sendAsync(sendOTPEmail, [user.email, otp, userName], 'OTP email');
+    }
+
+    if (wantsSMS(user)) {
+        sendAsync(sendOTPSMS, [user.phone, otp], 'OTP SMS');
+    }
 }
 
-export async function sendPasswordResetNotification(email, phone, otp) {
-    sendAsync(sendPasswordResetEmail, [email, otp], 'Password reset email');
-    sendAsync(sendPasswordResetSMS, [phone, otp], 'Password reset SMS');
+/**
+ * Send password reset notification
+ * Respects user preferences
+ * 
+ * @param {Object} user - User object with email, phone, notificationPreferences
+ * @param {string} otp - Password reset OTP code
+ */
+export async function sendPasswordResetNotification(user, otp) {
+    if (wantsEmail(user)) {
+        sendAsync(sendPasswordResetEmail, [user.email, otp], 'Password reset email');
+    }
+
+    if (wantsSMS(user)) {
+        sendAsync(sendPasswordResetSMS, [user.phone, otp], 'Password reset SMS');
+    }
 }
 
 // ============================================
 // ACCOUNT NOTIFICATIONS
 // ============================================
 
-export async function sendWelcomeNotification(email, phone, userName) {
-    sendAsync(sendWelcomeEmail, [email, userName], 'Welcome email');
-    sendAsync(sendWelcomeSMS, [phone, userName], 'Welcome SMS');
+export async function sendWelcomeNotification(user, userName) {
+    if (wantsEmail(user)) {
+        sendAsync(sendWelcomeEmail, [user.email, userName], 'Welcome email');
+    }
+
+    if (wantsSMS(user)) {
+        sendAsync(sendWelcomeSMS, [user.phone, userName], 'Welcome SMS');
+    }
 }
 
-export async function sendAccountVerifiedNotification(email, phone, userName) {
-    sendAsync(sendAccountVerifiedEmail, [email, userName], 'Account verified email');
-    sendAsync(sendAccountVerifiedSMS, [phone, userName], 'Account verified SMS');
+export async function sendAccountVerifiedNotification(user, userName) {
+    if (wantsEmail(user)) {
+        sendAsync(sendAccountVerifiedEmail, [user.email, userName], 'Account verified email');
+    }
+
+    if (wantsSMS(user)) {
+        sendAsync(sendAccountVerifiedSMS, [user.phone, userName], 'Account verified SMS');
+    }
 }
 
-export async function sendPasswordChangedNotification(email, phone, userName) {
-    sendAsync(sendPasswordChangedEmail, [email, userName], 'Password changed email');
-    sendAsync(sendPasswordChangedSMS, [phone], 'Password changed SMS');
+export async function sendPasswordChangedNotification(user, userName) {
+    if (wantsEmail(user)) {
+        sendAsync(sendPasswordChangedEmail, [user.email, userName], 'Password changed email');
+    }
+
+    if (wantsSMS(user)) {
+        sendAsync(sendPasswordChangedSMS, [user.phone], 'Password changed SMS');
+    }
 }
 
-export async function sendAccountLockedNotification(email, phone, unlockTime, unlockMinutes) {
-    sendAsync(sendAccountLockedEmail, [email, unlockTime], 'Account locked email');
-    sendAsync(sendAccountLockedSMS, [phone, unlockMinutes], 'Account locked SMS');
+export async function sendAccountLockedNotification(user, unlockTime, unlockMinutes) {
+    if (wantsEmail(user)) {
+        sendAsync(sendAccountLockedEmail, [user.email, unlockTime], 'Account locked email');
+    }
+
+    if (wantsSMS(user)) {
+        sendAsync(sendAccountLockedSMS, [user.phone, unlockMinutes], 'Account locked SMS');
+    }
 }
 
 // ============================================
@@ -78,19 +154,26 @@ export async function sendAccountLockedNotification(email, phone, unlockTime, un
 // ============================================
 
 export async function sendTransactionNotification(user, transactionData) {
-    const { email, phone } = user;
-    
-    sendAsync(sendTransactionEmail, [email, transactionData], 'Transaction email');
-    sendAsync(sendTransactionSMS, [phone, transactionData], 'Transaction SMS');
+    if (wantsEmail(user)) {
+        sendAsync(sendTransactionEmail, [user.email, transactionData], 'Transaction email');
+    }
+
+    if (wantsSMS(user)) {
+        sendAsync(sendTransactionSMS, [user.phone, transactionData], 'Transaction SMS');
+    }
 }
 
 export async function sendTransactionFailedNotification(user, failureData) {
-    const { email, phone } = user;
-    
-    sendAsync(sendTransactionFailedEmail, [email, failureData], 'Transaction failed email');
-    sendAsync(sendTransactionFailedSMS, [phone, failureData.reason], 'Transaction failed SMS');
+    if (wantsEmail(user)) {
+        sendAsync(sendTransactionFailedEmail, [user.email, failureData], 'Transaction failed email');
+    }
+
+    if (wantsSMS(user)) {
+        sendAsync(sendTransactionFailedSMS, [user.phone, failureData.reason], 'Transaction failed SMS');
+    }
 }
 
+// Large transaction alerts only via SMS for urgency
 export async function sendLargeTransactionAlert(user, amount, direction) {
     sendAsync(sendLargeTransactionSMS, [user.phone, amount, direction], 'Large transaction alert');
 }
@@ -101,9 +184,14 @@ export async function sendLargeTransactionAlert(user, amount, direction) {
 
 export async function sendLowBalanceNotification(user, balance, threshold) {
     const userName = user.profile?.firstName || 'there';
-    
-    sendAsync(sendLowBalanceEmail, [user.email, userName, balance, threshold], 'Low balance email');
-    sendAsync(sendLowBalanceSMS, [user.phone, balance, threshold], 'Low balance SMS');
+
+    if (wantsEmail(user)) {
+        sendAsync(sendLowBalanceEmail, [user.email, userName, balance, threshold], 'Low balance email');
+    }
+
+    if (wantsSMS(user)) {
+        sendAsync(sendLowBalanceSMS, [user.phone, balance, threshold], 'Low balance SMS');
+    }
 }
 
 export default {
