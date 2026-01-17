@@ -16,35 +16,35 @@ import { validateUserForOperation } from './validation.util.js';
 
 export async function findUserById(userId, session = null) {
     const query = Users.findById(userId)
-        .select('email balance isVerified accountStatus phone profile createdAt');
-    
+        .select('email balance isVerified accountStatus phone profile notificationPreferences createdAt');
+
     if (session) query.session(session);
-    
+
     return await query;
 }
 
 export async function findUserByIdWithPassword(userId) {
     return await Users.findById(userId)
-        .select('+passwordHash email isVerified accountStatus refreshTokens');
+        .select('email balance isVerified accountStatus phone profile notificationPreferences createdAt +passwordHash');
 }
 
 export async function findUserByEmail(email, session = null) {
     const query = Users.findOne({ email })
-        .select('email balance isVerified accountStatus phone profile createdAt');
-    
+        .select('email balance isVerified accountStatus phone profile notificationPreferences createdAt');
+
     if (session) query.session(session);
-    
+
     return await query;
 }
 
 export async function findUserByEmailWithPassword(email) {
     return await Users.findOne({ email })
-        .select('+passwordHash email isVerified accountStatus failedLoginAttempts accountLockedUntil refreshTokens profile phone');
+        .select('+passwordHash email phone balance isVerified accountStatus failedLoginAttempts accountLockedUntil refreshTokens profile notificationPreferences');
 }
 
 export async function findUserByPhone(phone) {
     return await Users.findOne({ phone })
-        .select('email phone isVerified accountStatus');
+        .select('email phone isVerified accountStatus notificationPreferences');
 }
 
 /**
@@ -81,6 +81,14 @@ export async function setUserVerified(userId) {
     );
 }
 
+export async function updateNotificationPreferences(userId, preferences) {
+    return await Users.findByIdAndUpdate(
+        userId,
+        { $set: { notificationPreferences: preferences } },
+        { new: true, runValidators: true }
+    ).select('email notificationPreferences');
+}
+
 // ==========================================
 // TRANSACTION QUERIES
 // ==========================================
@@ -112,19 +120,19 @@ export async function findTransactionsByUser(userId, options = {}) {
         startDate = null,
         endDate = null
     } = options;
-    
+
     const query = { userId };
-    
+
     if (direction) query.direction = direction;
-    
+
     if (startDate || endDate) {
         query.createdAt = {};
         if (startDate) query.createdAt.$gte = new Date(startDate);
         if (endDate) query.createdAt.$lte = new Date(endDate);
     }
-    
+
     const skip = (page - 1) * limit;
-    
+
     const [transactions, total] = await Promise.all([
         Transactions.find(query)
             .sort({ createdAt: -1 })
@@ -134,7 +142,7 @@ export async function findTransactionsByUser(userId, options = {}) {
             .lean(),
         Transactions.countDocuments(query)
     ]);
-    
+
     return {
         transactions,
         pagination: {
@@ -179,11 +187,10 @@ export async function getTransactionStats(userId) {
 // ==========================================
 // HELPER FUNCTIONS
 // ==========================================
-
 export function buildPaginationParams(query) {
     const page = Math.max(1, parseInt(query.page) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(query.limit) || 20));
-    
+
     return { page, limit };
 }
 
@@ -199,14 +206,15 @@ export default {
     checkPhoneExists,
     updateUserBalance,
     setUserVerified,
-    
+    updateNotificationPreferences,
+
     // Transaction queries
     createTransactionPair,
     findTransactionsByUser,
     findRecentTransactions,
     findTransactionByReference,
     getTransactionStats,
-    
+
     // Helpers
     buildPaginationParams
 };
