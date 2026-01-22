@@ -14,7 +14,7 @@ import {
     validateOTP,
     validateEmail,
     validatePassword
-} from '../utils/validation.util.js';
+} from '../utils/validations.util.js';
 import {
     sendOTPNotification,
     sendWelcomeNotification,
@@ -40,7 +40,6 @@ import { ValidationError, UserNotFoundError } from '../utils/errors.util.js';
 export async function signupController(req, res) {
     try {
         const { email, password, phone } = req.body;
-
         validateSignupInputs({ email, password, phone });
 
         const user = await createUser(email, password, phone);

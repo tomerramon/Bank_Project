@@ -140,7 +140,7 @@ const userSchema = new mongoose.Schema({
 // Compound indexes for common query patterns
 userSchema.index({ email: 1, accountStatus: 1 }); // Filter active users by email
 userSchema.index({ createdAt: -1 }); // Sort by registration date
-userSchema.index({ 'refreshTokens.token': 1 }); // Fast logout lookups
+// userSchema.index({ 'refreshTokens.token': 1 }); // Fast logout lookups
 userSchema.index({ phone: 1, accountStatus: 1 }); // Filter active users by phone
 
 
@@ -319,7 +319,6 @@ userSchema.pre('save', function (next) {
     if (this.email) {
         this.email = this.email.toLowerCase();
     }
-    next();
 });
 
 /**
@@ -333,7 +332,6 @@ userSchema.pre('save', function (next) {
             .sort((a, b) => b.createdAt - a.createdAt)
             .slice(0, 5);
     }
-    next();
 });
 
 

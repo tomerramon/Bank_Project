@@ -3,8 +3,7 @@ import mongoose from 'mongoose';
 const transactionSchema = new mongoose.Schema({
     _id: {
         type: mongoose.Schema.Types.ObjectId,
-        auto: true,
-        unique: true
+        auto: true
     },
     userId: {
         type: mongoose.Schema.Types.ObjectId,

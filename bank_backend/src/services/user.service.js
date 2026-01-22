@@ -65,6 +65,7 @@ async function checkUserExists(email, phone) {
  */
 export async function createUser(email, password, phone) {
     if (!email || !password || !phone) {
+
         throw new ValidationError("Email, password, and phone are required");
     }
 
@@ -80,7 +81,6 @@ export async function createUser(email, password, phone) {
         });
 
         console.log(`✅ User created: ${email} (ID: ${newUser._id})`);
-
 
         return {
             id: newUser._id,
@@ -156,7 +156,7 @@ export async function getUserProfile(userId, lim = 10) {
     // Get recent transactions
     const transactionsWithDollars = await getRecentTransactions(userId, lim);
 
- return {
+    return {
         id: user._id,
         email: user.email,
         phone: user.phone,
@@ -181,7 +181,7 @@ export async function getUserProfile(userId, lim = 10) {
  * @throws {UserNotFoundError|ValidationError}
  */
 export async function updateUserProfile(userId, updates) {
-     const allowedFields = [
+    const allowedFields = [
         'profile.firstName',
         'profile.lastName',
         'profile.dateOfBirth',

@@ -8,7 +8,7 @@
 
 import Users from '../models/user.model.js';
 import Transactions from '../models/transaction.model.js';
-import { validateUserForOperation } from './validation.util.js';
+import { validateUserForOperation } from './validations.util.js';
 
 // ==========================================
 // USER QUERIES
@@ -109,7 +109,7 @@ export async function createTransactionPair(fromUserId, toUserId, amountInCents,
             direction: 'T_IN',
             reference,
         }
-    ], { session });
+    ], { session, ordered: true });
 }
 
 export async function findTransactionsByUser(userId, options = {}) {

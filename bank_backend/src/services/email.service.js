@@ -102,6 +102,7 @@ async function sendEmail(to, subject, text, html) {
         const info = await transport.sendMail({
             from: process.env.SMTP_FROM || 'Bank App <noreply@bank.com>',
             to,
+            replyTo: 'no-reply@bank.com',
             subject,
             text,
             html

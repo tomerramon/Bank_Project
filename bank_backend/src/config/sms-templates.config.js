@@ -173,7 +173,7 @@ export function validateSMSLength(message) {
  * Format phone number to E.164 format
  * Required by Twilio
  */
-export function formatPhoneE164(phone, defaultCountryCode = '1') {
+export function formatPhoneE164(phone, defaultCountryCode = '972') {
     // Remove all non-digit characters
     let digits = phone.replace(/\D/g, '');
     

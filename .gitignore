@@ -3,3 +3,4 @@ node_modules.rar
 .env
 renameFiles.sh
 .dockerignore
+*old/*

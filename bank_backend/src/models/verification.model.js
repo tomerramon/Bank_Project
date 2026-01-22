@@ -3,8 +3,7 @@ import mongoose from 'mongoose';
 const verificationSchema = new mongoose.Schema({
     _id: {
         type: mongoose.Schema.Types.ObjectId,
-        unique: true,
-        auto: true,
+        auto: true
     },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -33,7 +32,6 @@ const verificationSchema = new mongoose.Schema({
     expiresAt: {
         type: Date,
         required: true,
-        index: true,
     },
     // Track when verification was completed
     verifiedAt: {

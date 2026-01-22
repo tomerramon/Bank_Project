@@ -17,9 +17,9 @@ import {
     findTransactionsByUser,
     findRecentTransactions,
     findTransactionByReference,
-    getTransactionStats
+    getTransactionStats as getTransactionStatsQuery
 } from '../utils/query.util.js';
-import { validateAmount, requireDifferentUsers, requireVerified, requireActive } from '../utils/validation.util.js';
+import { validateAmount, requireDifferentUsers, requireVerified, requireActive } from '../utils/validations.util.js';
 import {
     InsufficientFundsError,
     UserNotFoundError
@@ -285,7 +285,7 @@ export async function getUserBalance(userId) {
  * @returns {Promise<Object>} - Transaction statistics
  */
 export async function getTransactionStats(userId) {
-    const stats = await getTransactionStats(userId);
+    const stats = await getTransactionStatsQuery(userId);
 
     const result = {
         sent: { count: 0, total: 0 },
