@@ -128,7 +128,7 @@ export function formatPhoneNational(phone: string, defaultCountry?: CountryCode)
  * @param phone - Phone number to validate
  * @param country - Expected country code (optional)
  */
-export function isValidatePhoneNumber(phone: string, country?: CountryCode): boolean {
+export function isValidPhoneNumber(phone: string, country?: CountryCode): boolean {
     try {
         const phoneNum = parsePhoneNumber(phone, country);
         return phoneNum?.isValid() ?? false;
