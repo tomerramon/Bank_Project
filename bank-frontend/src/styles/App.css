@@ -89,7 +89,6 @@
 
 /* Manual dark mode class (for toggle) */
 .dark {
-  @media (prefers-color-scheme: dark) {
     @theme {
       --color-surface-base: #0f0a1f;
       --color-surface-raised: #1a1333;
@@ -104,7 +103,6 @@
       --color-brand-500: #a78bfa;
       --color-brand-600: #c4b5fd;
     }
-  }
 }
 
 /* ==========================================
