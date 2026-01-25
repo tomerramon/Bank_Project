@@ -4,3 +4,4 @@ node_modules.rar
 renameFiles.sh
 .dockerignore
 *old/*
+.vscode
