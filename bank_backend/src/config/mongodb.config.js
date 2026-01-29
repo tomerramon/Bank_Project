@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 // Connection options for production-ready setup
 const options = {
+    dbName: "bankDB",
     maxPoolSize: 10,          // Maximum number of connections in pool
     minPoolSize: 2,           // Minimum number of connections
     socketTimeoutMS: 45000,   // Close sockets after 45 seconds of inactivity
