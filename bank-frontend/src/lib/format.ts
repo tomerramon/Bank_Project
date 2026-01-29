@@ -112,8 +112,8 @@ export function formatPhone(phone: string, defaultCountry?: CountryCode): string
  * Format phone number in national format (no country code)
  * 
  * Example:
- * - +1 (555) 123-4567 → (555) 123-4567
- * - +972 54-123-4567 → 054-123-4567
+ * - +1 (555) 123-4567 â†’ (555) 123-4567
+ * - +972 54-123-4567 â†’ 054-123-4567
  */
 export function formatPhoneNational(phone: string, defaultCountry?: CountryCode): string {
     try {
@@ -211,7 +211,7 @@ export function maskPhone(phone: string): string {
 
 /**
  * Mask credit card (show last 4 digits)
- * Example: 1234567890123456 → **** **** **** 3456
+ * Example: 1234567890123456 â†’ **** **** **** 3456
  */
 export function maskCardNumber(cardNumber: string): string {
     const digits = cardNumber.replace(/\D/g, '');

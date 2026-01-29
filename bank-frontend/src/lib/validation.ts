@@ -115,7 +115,12 @@ const parseAmount = (val: unknown) => {
 export const transferFormSchema = z
 	.object({
 		toEmail: emailSchema,
-		amount: z.preprocess(parseAmount, amountSchema),
+		amount: z
+			.any()
+			// 2. Run your cleaning logic
+			.transform(parseAmount)
+			// 3. Pipe to your business rules (min, max, etc.)
+			.pipe(amountSchema),
 	})
 	.strict();
 

@@ -2,11 +2,12 @@
  * FormField Component
  *
  * Combines: Label + Input + Error + Helper Text
+ * React 19: ref as prop
  */
 
 import { type InputHTMLAttributes, type Ref, type ReactNode } from "react";
 import { AlertCircle } from "lucide-react";
-import { cn } from "@lib/cn";
+import { cn } from "@/lib/cn";
 
 interface FormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 	label?: string;
@@ -31,27 +32,23 @@ export function FormField({
 	ref,
 	...props
 }: FormFieldProps) {
-	// Generate ID if not provided
-	const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
+	// Generate ID from label if not provided
+	const inputId = id || label?.toLowerCase().replace(/\s+/g, "-") || "input";
 
 	return (
-		<div
-			className={
-				fullWidth ? "form-field-container-full" : "form-field-container"
-			}
-		>
+		<div className={cn("mb-4", fullWidth && "w-full")}>
 			{label && (
 				<label htmlFor={inputId} className="label">
 					{label}
-					{required && (
-						<span className="error-text">*</span>
-					)}
+					{required && <span className="text-red-600 ml-0.5">*</span>}
 				</label>
 			)}
 
 			<div className="relative">
 				{leftIcon && (
-					<div className="form-field-left-icon">{leftIcon}</div>
+					<div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+						{leftIcon}
+					</div>
 				)}
 
 				<input
@@ -75,10 +72,12 @@ export function FormField({
 				/>
 
 				{error ? (
-					<AlertCircle className="form-field-error-icon" />
+					<AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-red-500 pointer-events-none" />
 				) : (
 					rightIcon && (
-						<div className="form-field-right-icon">{rightIcon}</div>
+						<div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+							{rightIcon}
+						</div>
 					)
 				)}
 			</div>
@@ -90,7 +89,10 @@ export function FormField({
 			)}
 
 			{!error && helperText && (
-				<p id={`${inputId}-helper`} className="form-field-helper-text">
+				<p
+					id={`${inputId}-helper`}
+					className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+				>
 					{helperText}
 				</p>
 			)}

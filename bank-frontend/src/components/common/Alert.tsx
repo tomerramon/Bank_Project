@@ -39,7 +39,6 @@ export function Alert({
 	onDismiss,
 	className,
 }: AlertProps) {
-	
 	const Icon = variantIcon[variant];
 
 	return (

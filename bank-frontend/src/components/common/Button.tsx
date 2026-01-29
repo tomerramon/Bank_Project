@@ -1,25 +1,16 @@
 /**
- * Button  Component
+ * Button Component
+ *
+ * React 19 pattern: ref as prop (no forwardRef)
+ * Proper TypeScript generics and variants
  */
 
-import type { ButtonHTMLAttributes, Ref } from "react";
+import { type ButtonHTMLAttributes, type Ref } from "react";
 import { Loader2 } from "lucide-react";
-import { cn } from "@lib/cn";
+import { cn } from "@/lib/cn";
 
-const variantClasses = {
-	primary: "btn-primary",
-	secondary: "btn-secondary",
-	ghost: "btn-ghost",
-	danger: "btn-danger",
-} as const;
-
-const sizeClasses = {
-	sm: "text-sm px-3 py-1.5",
-	md: "text-sm px-4 py-2",
-	lg: "text-base px-6 py-3",
-};
-type ButtonVariant = keyof typeof variantClasses;
-type ButtonSize = keyof typeof sizeClasses;
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 	variant?: ButtonVariant;
@@ -28,6 +19,12 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 	fullWidth?: boolean;
 	ref?: Ref<HTMLButtonElement>;
 }
+
+const sizeClasses: Record<ButtonSize, string> = {
+	sm: "text-sm px-3 py-1.5",
+	md: "text-sm px-4 py-2",
+	lg: "text-base px-6 py-3",
+};
 
 export function Button({
 	children,
@@ -45,8 +42,8 @@ export function Button({
 			ref={ref}
 			disabled={disabled || isLoading}
 			className={cn(
-                "btn",
-				variantClasses[variant],
+				"btn",
+				`btn-${variant}`,
 				sizeClasses[size],
 				fullWidth && "w-full",
 				isLoading && "cursor-wait",
@@ -54,7 +51,7 @@ export function Button({
 			)}
 			{...props}
 		>
-			{isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+			{isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
 			{children}
 		</button>
 	);
