@@ -1,7 +1,5 @@
 /**
  * Login Page
- *
- * Example of proper page structure with form handling
  */
 
 import { useState } from "react";
@@ -13,9 +11,12 @@ import { Mail, Lock } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { FormField } from "@/components/common/FormField";
 import { Alert } from "@/components/common/Alert";
+import { Card, CardContent } from "@/components/common/Card";
 import { Logo } from "@/components/common/Logo";
 import { useAuthStore } from "@/store/authStore";
 import { loginFormSchema, type LoginFormData } from "@/lib/validation";
+
+import bankBg from "@/assets/bank_bg.png";
 
 export function LoginPage() {
 	const navigate = useNavigate();
@@ -41,17 +42,32 @@ export function LoginPage() {
 	};
 
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
-			<div className="w-full max-w-lg">
-				<div>
+		<div
+			className="min-h-screen flex items-center justify-center px-4"
+			style={{
+				backgroundImage: `url(${bankBg})`, // Use the imported variable here
+				backgroundSize: "cover", // Optional: Ensures the image covers the screen
+				backgroundPosition: "center", // Optional: Centers the image
+			}}
+		>
+			<div className="w-full max-w-md">
+				{/* Card */}
+				<Card className="p-8">
 					{/* Logo */}
 					<div className="flex justify-center mb-8">
 						<Logo size="lg" />
 					</div>
-
-					{/* Card */}
-					<div className="card p-8">
-						<h1 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-gray-100">
+					<CardContent>
+						<h1
+							className="text-2xl font-bold text-center mb-6"
+							style={{
+								background:
+									"linear-gradient(135deg, #00f0ff 0%, #4dd4ff 100%)",
+								WebkitBackgroundClip: "text",
+								WebkitTextFillColor: "transparent",
+								backgroundClip: "text",
+							}}
+						>
 							Welcome Back
 						</h1>
 
@@ -101,18 +117,22 @@ export function LoginPage() {
 
 						{/* Footer Links */}
 						<div className="mt-6 text-center space-y-2">
-							<p className="text-sm text-gray-600 dark:text-gray-400">
+							<p
+								className="text-sm"
+								style={{ color: "var(--color-text-secondary)" }}
+							>
 								Don't have an account?{" "}
 								<Link
 									to="/signup"
-									className="font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
+									className="font-medium"
+									style={{ color: "var(--color-brand-500)" }}
 								>
 									Sign up
 								</Link>
 							</p>
 						</div>
-					</div>
-				</div>
+					</CardContent>
+				</Card>
 			</div>
 		</div>
 	);

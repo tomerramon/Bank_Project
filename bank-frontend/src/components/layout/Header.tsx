@@ -3,7 +3,7 @@
  */
 
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, User, /* CreditCard */ } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import { Logo } from "@/components/common/Logo";
 import { Button } from "@/components/common/Button";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
@@ -23,25 +23,52 @@ export function Header() {
 	};
 
 	return (
-		<header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+		<header
+			style={{
+				backgroundColor: "var(--color-surface-overlay)",
+				borderBottom: "1px solid var(--color-border-subtle)",
+			}}
+		>
 			<div className="container-wide">
 				<div className="flex items-center justify-between h-16">
 					{/* Logo */}
 					<Link to="/dashboard">
-						<Logo size="md" />
+						<Logo size="sm" />
 					</Link>
 
 					{/* Navigation */}
 					<nav className="hidden md:flex items-center gap-6">
 						<Link
 							to="/dashboard"
-							className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors"
+							className="font-medium transition-colors"
+							style={{
+								color: "var(--color-text-secondary)",
+							}}
+							onMouseEnter={(e) => {
+								e.currentTarget.style.color =
+									"var(--color-brand-500)";
+							}}
+							onMouseLeave={(e) => {
+								e.currentTarget.style.color =
+									"var(--color-text-secondary)";
+							}}
 						>
 							Dashboard
 						</Link>
 						<Link
 							to="/transactions"
-							className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors"
+							className="font-medium transition-colors"
+							style={{
+								color: "var(--color-text-secondary)",
+							}}
+							onMouseEnter={(e) => {
+								e.currentTarget.style.color =
+									"var(--color-brand-500)";
+							}}
+							onMouseLeave={(e) => {
+								e.currentTarget.style.color =
+									"var(--color-text-secondary)";
+							}}
 						>
 							Transactions
 						</Link>
@@ -53,12 +80,31 @@ export function Header() {
 
 						{/* User Info */}
 						{user && (
-							<div className="hidden sm:flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800">
-								<div className="h-8 w-8 rounded-full bg-brand-500 flex items-center justify-center">
+							<div
+								className="hidden sm:flex items-center gap-3 px-3 py-2 rounded-lg"
+								style={{
+									backgroundColor:
+										"var(--color-surface-raised)",
+								}}
+							>
+								<div
+									className="h-8 w-8 rounded-full flex items-center justify-center"
+									style={{
+										background:
+											"linear-gradient(135deg, #00f0ff 0%, #a855f7 100%)",
+										boxShadow:
+											"0 0 10px rgba(0, 240, 255, 0.3)",
+									}}
+								>
 									<User className="h-4 w-4 text-white" />
 								</div>
 								<div className="text-sm">
-									<p className="font-medium text-gray-900 dark:text-gray-100">
+									<p
+										className="font-medium"
+										style={{
+											color: "var(--color-text-primary)",
+										}}
+									>
 										{user.email}
 									</p>
 								</div>

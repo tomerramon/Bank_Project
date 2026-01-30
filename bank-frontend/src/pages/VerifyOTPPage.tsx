@@ -11,6 +11,7 @@ import { KeyRound } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { FormField } from "@/components/common/FormField";
 import { Alert } from "@/components/common/Alert";
+import { Card, CardContent } from "@/components/common/Card";
 import { Logo } from "@/components/common/Logo";
 import * as authApi from "@/api/auth.api";
 import { otpFormSchema, type OTPFormData } from "@/lib/validation";
@@ -79,85 +80,113 @@ export function VerifyOTPPage() {
 	}
 
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
+		<div
+			className="min-h-screen flex items-center justify-center px-4"
+			style={{
+				background:
+					"linear-gradient(135deg, #0a0e27 0%, #1a1333 50%, #0a0e27 100%)",
+			}}
+		>
 			<div className="w-full max-w-md">
 				<div className="flex justify-center mb-8">
 					<Logo size="lg" />
 				</div>
 
-				<div className="card p-8">
-					<h1 className="text-2xl font-bold text-center mb-2 text-gray-900 dark:text-gray-100">
-						Verify Your Account
-					</h1>
-					<p className="text-center text-gray-600 dark:text-gray-400 mb-6">
-						We sent a 6-digit code to <strong>{email}</strong>
-					</p>
-
-					{error && (
-						<Alert
-							variant="error"
-							className="mb-6"
-							onDismiss={() => setError(null)}
+				<Card className="p-8">
+					<CardContent>
+						<h1
+							className="text-2xl font-bold text-center mb-2"
+							style={{
+								background:
+									"linear-gradient(135deg, #00f0ff 0%, #4dd4ff 100%)",
+								WebkitBackgroundClip: "text",
+								WebkitTextFillColor: "transparent",
+								backgroundClip: "text",
+							}}
 						>
-							{error}
-						</Alert>
-					)}
-
-					{success && (
-						<Alert variant="success" className="mb-6">
-							{success}
-						</Alert>
-					)}
-
-					<form
-						onSubmit={handleSubmit(onSubmit)}
-						className="space-y-4"
-					>
-						<FormField
-							label="Verification Code"
-							type="text"
-							placeholder="123456"
-							leftIcon={<KeyRound className="h-5 w-5" />}
-							error={errors.otp?.message}
-							maxLength={6}
-							inputMode="numeric"
-							pattern="[0-9]*"
-							autoComplete="one-time-code"
-							{...register("otp")}
-						/>
-
-						<Button
-							type="submit"
-							variant="primary"
-							fullWidth
-							isLoading={isSubmitting}
+							Verify Your Account
+						</h1>
+						<p
+							className="text-center mb-6"
+							style={{ color: "var(--color-text-secondary)" }}
 						>
-							Verify Account
-						</Button>
-					</form>
+							We sent a 6-digit code to <strong>{email}</strong>
+						</p>
 
-					<div className="mt-6 text-center space-y-2">
-						<p className="text-sm text-gray-600 dark:text-gray-400">
-							Didn't receive the code?{" "}
-							<button
-								type="button"
-								onClick={handleResendOTP}
-								disabled={resending}
-								className="font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 disabled:opacity-50"
+						{error && (
+							<Alert
+								variant="error"
+								className="mb-6"
+								onDismiss={() => setError(null)}
 							>
-								{resending ? "Sending..." : "Resend"}
-							</button>
-						</p>
-						<p className="text-sm text-gray-600 dark:text-gray-400">
-							<Link
-								to="/login"
-								className="font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
+								{error}
+							</Alert>
+						)}
+
+						{success && (
+							<Alert variant="success" className="mb-6">
+								{success}
+							</Alert>
+						)}
+
+						<form
+							onSubmit={handleSubmit(onSubmit)}
+							className="space-y-4"
+						>
+							<FormField
+								label="Verification Code"
+								type="text"
+								placeholder="123456"
+								leftIcon={<KeyRound className="h-5 w-5" />}
+								error={errors.otp?.message}
+								maxLength={6}
+								inputMode="numeric"
+								pattern="[0-9]*"
+								autoComplete="one-time-code"
+								{...register("otp")}
+							/>
+
+							<Button
+								type="submit"
+								variant="primary"
+								fullWidth
+								isLoading={isSubmitting}
 							>
-								Back to login
-							</Link>
-						</p>
-					</div>
-				</div>
+								Verify Account
+							</Button>
+						</form>
+
+						<div className="mt-6 text-center space-y-2">
+							<p
+								className="text-sm"
+								style={{ color: "var(--color-text-secondary)" }}
+							>
+								Didn't receive the code?{" "}
+								<button
+									type="button"
+									onClick={handleResendOTP}
+									disabled={resending}
+									className="font-medium disabled:opacity-50"
+									style={{ color: "var(--color-brand-500)" }}
+								>
+									{resending ? "Sending..." : "Resend"}
+								</button>
+							</p>
+							<p
+								className="text-sm"
+								style={{ color: "var(--color-text-secondary)" }}
+							>
+								<Link
+									to="/login"
+									className="font-medium"
+									style={{ color: "var(--color-brand-500)" }}
+								>
+									Back to login
+								</Link>
+							</p>
+						</div>
+					</CardContent>
+				</Card>
 			</div>
 		</div>
 	);

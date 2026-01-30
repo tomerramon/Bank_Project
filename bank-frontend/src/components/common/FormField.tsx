@@ -5,7 +5,12 @@
  * React 19: ref as prop
  */
 
-import { type InputHTMLAttributes, type Ref, type ReactNode } from "react";
+import {
+	type InputHTMLAttributes,
+	type Ref,
+	type ReactNode,
+	useState,
+} from "react";
 import { AlertCircle } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -34,6 +39,7 @@ export function FormField({
 }: FormFieldProps) {
 	// Generate ID from label if not provided
 	const inputId = id || label?.toLowerCase().replace(/\s+/g, "-") || "input";
+	const [val, setVal] = useState<string | null>("");
 
 	return (
 		<div className={cn("mb-4", fullWidth && "w-full")}>
@@ -45,7 +51,7 @@ export function FormField({
 			)}
 
 			<div className="relative">
-				{leftIcon && (
+				{leftIcon && (!val || val === "") && (
 					<div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
 						{leftIcon}
 					</div>
@@ -68,6 +74,10 @@ export function FormField({
 								? `${inputId}-helper`
 								: undefined
 					}
+					onChange={(e) => {
+						setVal(e.target.value);
+						console.log(e.target.value);
+					}}
 					{...props}
 				/>
 
