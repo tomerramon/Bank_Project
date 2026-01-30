@@ -231,8 +231,8 @@
 	/* Inputs */
 	.input {
 		width: 100%;
-		padding: 0.5rem 0.75rem;
-		padding: 0.5rem 0.75rem;
+		padding: 0.5rem 2.5rem;
+		/* padding: 0.5rem 0.75rem; */
 		background-color: var(--color-surface-base);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
@@ -242,7 +242,6 @@
 
 	.input::placeholder {
 		color: var(--color-text-tertiary);
-        /* padding: 25px; */
 	}
 
 	.input:focus {

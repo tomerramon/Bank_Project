@@ -16,6 +16,7 @@ import { Logo } from "@/components/common/Logo";
 import * as authApi from "@/api/auth.api";
 import { signupFormSchema, type SignupFormData } from "@/lib/validation";
 import { getErrorMessage } from "@/api/client.api";
+
 import bankBg from "@/assets/bank_bg.png";
 
 export function SignupPage() {
@@ -45,22 +46,38 @@ export function SignupPage() {
 
 	return (
 		<div
-			className="min-h-screen flex items-center justify-center px-4"
+			className="min-h-screen flex items-end justify-end px-12 sm:px-20 md:px-26 lg:px-40 pb-16 md:pb-24 lg:pb-32"
 			style={{
-				backgroundImage: `url(${bankBg})`, // Use the imported variable here
-				backgroundSize: "cover", // Optional: Ensures the image covers the screen
-				backgroundPosition: "center", // Optional: Centers the image
+				backgroundImage: `url(${bankBg})`,
+				backgroundSize: "cover",
+				backgroundPosition: "center",
+				backgroundRepeat: "no-repeat",
+				backgroundColor: "#0a0e27",
 			}}
 		>
-			<div className="w-full max-w-md">
-				{/* <div className="flex justify-center mb-8">
-					<Logo size="lg" />
-				</div> */}
+			{/* Overlay */}
+			<div
+				className="absolute inset-0"
+				style={{
+					background:
+						"linear-gradient(90deg, rgba(10, 14, 39, 0.85) 0%, rgba(10, 14, 39, 0.4) 100%)",
+				}}
+			/>
 
-				<Card className="p-8">
-					<div className="flex justify-center mb-8">
-						<Logo size="lg" />
-					</div>
+			<div className="relative z-10 w-full max-w-md">
+				<div className="flex justify-center mb-6">
+					<Logo size="lg" showText={false} />
+				</div>
+
+				<Card
+					className="p-8"
+					style={{
+						backgroundColor: "rgba(26, 19, 51, 0.9)",
+						backdropFilter: "blur(10px)",
+						border: "1px solid rgba(0, 240, 255, 0.3)",
+						boxShadow: "0 0 40px rgba(0, 240, 255, 0.2)",
+					}}
+				>
 					<CardContent>
 						<h1
 							className="text-2xl font-bold text-center mb-6"
@@ -105,7 +122,7 @@ export function SignupPage() {
 								placeholder="••••••••"
 								leftIcon={<Lock className="h-5 w-5" />}
 								error={errors.password?.message}
-								helperText="At least 8 characters with uppercase, lowercase, number, and special character"
+								helperText="Min 8 chars with uppercase, lowercase, number & special char"
 								required
 								{...register("password")}
 							/>
@@ -139,8 +156,8 @@ export function SignupPage() {
 								Already have an account?{" "}
 								<Link
 									to="/login"
-									className="font-medium"
-									style={{ color: "var(--color-brand-500)" }}
+									className="font-medium hover:underline"
+									style={{ color: "#00f0ff" }}
 								>
 									Sign in
 								</Link>

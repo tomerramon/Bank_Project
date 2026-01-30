@@ -43,20 +43,41 @@ export function LoginPage() {
 
 	return (
 		<div
-			className="min-h-screen flex items-center justify-center px-4"
+			className="min-h-screen flex items-end justify-end px-12 sm:px-20 md:px-26 lg:px-40 pb-16 md:pb-24 lg:pb-32"
 			style={{
-				backgroundImage: `url(${bankBg})`, // Use the imported variable here
-				backgroundSize: "cover", // Optional: Ensures the image covers the screen
-				backgroundPosition: "center", // Optional: Centers the image
+				backgroundImage: `url(${bankBg})`, 
+				backgroundSize: "cover",
+				backgroundPosition: "center",
+				backgroundRepeat: "no-repeat",
+				backgroundColor: "#0a0e27",
 			}}
 		>
-			<div className="w-full max-w-md">
+			{/* Overlay for better readability */}
+			<div
+				className="absolute inset-0"
+				style={{
+					background:
+						"linear-gradient(90deg, rgba(10, 14, 39, 0.85) 0%, rgba(10, 14, 39, 0.4) 100%)",
+				}}
+			/>
+
+			{/* Content Container */}
+			<div className="relative z-10 w-full max-w-md">
+				{/* Logo */}
+				<div className="flex justify-center mb-6">
+					<Logo size="lg" showText={false} />
+				</div>
+
 				{/* Card */}
-				<Card className="p-8">
-					{/* Logo */}
-					<div className="flex justify-center mb-8">
-						<Logo size="lg" />
-					</div>
+				<Card
+					className="p-8"
+					style={{
+						backgroundColor: "rgba(26, 19, 51, 0.9)",
+						backdropFilter: "blur(10px)",
+						border: "1px solid rgba(0, 240, 255, 0.3)",
+						boxShadow: "0 0 40px rgba(0, 240, 255, 0.2)",
+					}}
+				>
 					<CardContent>
 						<h1
 							className="text-2xl font-bold text-center mb-6"
@@ -68,7 +89,7 @@ export function LoginPage() {
 								backgroundClip: "text",
 							}}
 						>
-							Welcome Back
+							ACCESS NIGHT VAULT
 						</h1>
 
 						{/* Error Alert */}
@@ -124,8 +145,8 @@ export function LoginPage() {
 								Don't have an account?{" "}
 								<Link
 									to="/signup"
-									className="font-medium"
-									style={{ color: "var(--color-brand-500)" }}
+									className="font-medium hover:underline"
+									style={{ color: "#00f0ff" }}
 								>
 									Sign up
 								</Link>

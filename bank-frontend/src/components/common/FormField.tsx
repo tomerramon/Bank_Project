@@ -5,12 +5,7 @@
  * React 19: ref as prop
  */
 
-import {
-	type InputHTMLAttributes,
-	type Ref,
-	type ReactNode,
-	useState,
-} from "react";
+import { type InputHTMLAttributes, type Ref, type ReactNode } from "react";
 import { AlertCircle } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -39,20 +34,31 @@ export function FormField({
 }: FormFieldProps) {
 	// Generate ID from label if not provided
 	const inputId = id || label?.toLowerCase().replace(/\s+/g, "-") || "input";
-	const [val, setVal] = useState<string | null>("");
 
 	return (
 		<div className={cn("mb-4", fullWidth && "w-full")}>
 			{label && (
 				<label htmlFor={inputId} className="label">
 					{label}
-					{required && <span className="text-red-600 ml-0.5">*</span>}
+					{required && (
+						<span
+							style={{ color: "var(--color-error)" }}
+							className="ml-0.5"
+						>
+							*
+						</span>
+					)}
 				</label>
 			)}
 
 			<div className="relative">
-				{leftIcon && (!val || val === "") && (
-					<div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+				{leftIcon && (
+					<div
+						className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10"
+						style={{
+							color: "var(--color-text-tertiary)",
+						}}
+					>
 						{leftIcon}
 					</div>
 				)}
@@ -62,8 +68,8 @@ export function FormField({
 					id={inputId}
 					className={cn(
 						error ? "input-error" : "input",
-						leftIcon && "pl-10",
-						(rightIcon || error) && "pr-10",
+						leftIcon && "pl-11",
+						(rightIcon || error) && "pr-11",
 						className,
 					)}
 					aria-invalid={error ? "true" : "false"}
@@ -74,18 +80,22 @@ export function FormField({
 								? `${inputId}-helper`
 								: undefined
 					}
-					onChange={(e) => {
-						setVal(e.target.value);
-						console.log(e.target.value);
-					}}
 					{...props}
 				/>
 
 				{error ? (
-					<AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-red-500 pointer-events-none" />
+					<AlertCircle
+						className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 pointer-events-none"
+						style={{ color: "var(--color-error)" }}
+					/>
 				) : (
 					rightIcon && (
-						<div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+						<div
+							className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+							style={{
+								color: "var(--color-text-tertiary)",
+							}}
+						>
 							{rightIcon}
 						</div>
 					)
@@ -101,7 +111,8 @@ export function FormField({
 			{!error && helperText && (
 				<p
 					id={`${inputId}-helper`}
-					className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+					className="mt-1 text-xs"
+					style={{ color: "var(--color-text-tertiary)" }}
 				>
 					{helperText}
 				</p>
