@@ -57,14 +57,9 @@ export function Logo({ size = "md", showText = true, className }: LogoProps) {
 				<div
 					className={cn(
 						"relative rounded-full flex items-center justify-center border-2",
+						"logo-shield-glow",
 						config.container,
 					)}
-					style={{
-						background:
-							"linear-gradient(135deg, #0a0e27 0%, #1a1333 100%)",
-						borderColor: "rgba(0, 240, 255, 0.5)",
-						boxShadow: "0 0 20px rgba(0, 240, 255, 0.3)",
-					}}
 				>
 					{/* Shield icon */}
 					<Shield
@@ -74,13 +69,7 @@ export function Logo({ size = "md", showText = true, className }: LogoProps) {
 
 					{/* Subtle circuit lines */}
 					<div className="absolute inset-0 rounded-full overflow-hidden opacity-20">
-						<div
-							className="absolute top-1/4 left-1/4 w-1/2 h-px"
-							style={{
-								background:
-									"linear-gradient(90deg, transparent, #00f0ff, transparent)",
-							}}
-						/>
+						<div className="absolute top-1/4 left-1/4 w-1/2 h-px circuit-line-horizontal" />
 						<div
 							className="absolute top-3/4 left-1/4 w-1/2 h-px"
 							style={{
@@ -97,18 +86,9 @@ export function Logo({ size = "md", showText = true, className }: LogoProps) {
 				<div className="flex flex-col">
 					<span
 						className={cn(
-							"font-bold tracking-wide uppercase",
+							"font-bold tracking-wide uppercase text-gradient-cyber",
 							config.text,
 						)}
-						style={{
-							background:
-								"linear-gradient(135deg, #00f0ff 0%, #4dd4ff 100%)",
-							WebkitBackgroundClip: "text",
-							WebkitTextFillColor: "transparent",
-							backgroundClip: "text",
-							filter: "drop-shadow(0 0 8px rgba(0, 240, 255, 0.5))",
-							letterSpacing: "0.1em",
-						}}
 					>
 						NIGHT VAULT
 					</span>

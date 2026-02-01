@@ -17,8 +17,6 @@ import * as authApi from "@/api/auth.api";
 import { signupFormSchema, type SignupFormData } from "@/lib/validation";
 import { getErrorMessage } from "@/api/client.api";
 
-import bankBg from "@/assets/bank_bg.png";
-
 export function SignupPage() {
 	const navigate = useNavigate();
 	const [error, setError] = useState<string | null>(null);
@@ -45,50 +43,18 @@ export function SignupPage() {
 	};
 
 	return (
-		<div
-			className="min-h-screen flex items-end justify-end px-12 sm:px-20 md:px-26 lg:px-40 pb-16 md:pb-24 lg:pb-32"
-			style={{
-				backgroundImage: `url(${bankBg})`,
-				backgroundSize: "cover",
-				backgroundPosition: "center",
-				backgroundRepeat: "no-repeat",
-				backgroundColor: "#0a0e27",
-			}}
-		>
+		<div className="min-h-screen bg-bank-vault flex items-end justify-end px-12 sm:px-20 md:px-26 lg:px-40 pb-16 md:pb-24 lg:pb-32">
 			{/* Overlay */}
-			<div
-				className="absolute inset-0"
-				style={{
-					background:
-						"linear-gradient(90deg, rgba(10, 14, 39, 0.85) 0%, rgba(10, 14, 39, 0.4) 100%)",
-				}}
-			/>
+			<div className="absolute inset-0 bg-overlay-gradient-left" />
 
 			<div className="relative z-10 w-full max-w-md">
 				<div className="flex justify-center mb-6">
 					<Logo size="lg" showText={false} />
 				</div>
 
-				<Card
-					className="p-8"
-					style={{
-						backgroundColor: "rgba(26, 19, 51, 0.9)",
-						backdropFilter: "blur(10px)",
-						border: "1px solid rgba(0, 240, 255, 0.3)",
-						boxShadow: "0 0 40px rgba(0, 240, 255, 0.2)",
-					}}
-				>
+				<Card className="card-cyberpunk p-8">
 					<CardContent>
-						<h1
-							className="text-2xl font-bold text-center mb-6"
-							style={{
-								background:
-									"linear-gradient(135deg, #00f0ff 0%, #4dd4ff 100%)",
-								WebkitBackgroundClip: "text",
-								WebkitTextFillColor: "transparent",
-								backgroundClip: "text",
-							}}
-						>
+						<h1 className="text-2xl font-bold text-center mb-6 text-gradient-cyan uppercase">
 							Create Account
 						</h1>
 
