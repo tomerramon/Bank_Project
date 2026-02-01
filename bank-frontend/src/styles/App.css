@@ -126,7 +126,8 @@
 
 	*:focus-visible {
 		outline: none;
-		box-shadow: 0 0 0 2px var(--color-focus-ring-offset),
+		box-shadow:
+			0 0 0 2px var(--color-focus-ring-offset),
 			0 0 0 4px var(--color-focus-ring);
 	}
 }
@@ -174,7 +175,8 @@
 
 	.btn:focus-visible {
 		outline: none;
-		box-shadow: 0 0 0 2px var(--color-focus-ring-offset),
+		box-shadow:
+			0 0 0 2px var(--color-focus-ring-offset),
 			0 0 0 4px var(--color-focus-ring);
 	}
 
@@ -668,5 +670,29 @@
 		50% {
 			opacity: 0.5;
 		}
+	}
+	/* Fix autocomplete/autofill background color issue */
+	.autofill-fix:-webkit-autofill,
+	.autofill-fix:-webkit-autofill:hover,
+	.autofill-fix:-webkit-autofill:focus,
+	.autofill-fix:-webkit-autofill:active {
+		-webkit-box-shadow: 0 0 0 1000px var(--color-surface-base) inset !important;
+		-webkit-text-fill-color: var(--color-text-primary) !important;
+		caret-color: var(--color-text-primary) !important;
+		transition: background-color 5000s ease-in-out 0s;
+	}
+
+	/* Firefox autocomplete fix */
+	.autofill-fix:-moz-autofill,
+	.autofill-fix:-moz-autofill:hover,
+	.autofill-fix:-moz-autofill:focus {
+		background-color: var(--color-surface-base) !important;
+		color: var(--color-text-primary) !important;
+	}
+
+	/* General autofill fix */
+	input.autofill-fix:autofill {
+		background-color: var(--color-surface-base) !important;
+		color: var(--color-text-primary) !important;
 	}
 }

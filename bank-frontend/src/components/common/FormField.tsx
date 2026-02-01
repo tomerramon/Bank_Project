@@ -40,25 +40,13 @@ export function FormField({
 			{label && (
 				<label htmlFor={inputId} className="label">
 					{label}
-					{required && (
-						<span
-							style={{ color: "var(--color-error)" }}
-							className="ml-0.5"
-						>
-							*
-						</span>
-					)}
+					{required && <span className="ml-0.5 text-error">*</span>}
 				</label>
 			)}
 
 			<div className="relative">
 				{leftIcon && (
-					<div
-						className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10"
-						style={{
-							color: "var(--color-text-tertiary)",
-						}}
-					>
+					<div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10 text-text-tertiary">
 						{leftIcon}
 					</div>
 				)}
@@ -70,6 +58,7 @@ export function FormField({
 						error ? "input-error" : "input",
 						leftIcon && "pl-11",
 						(rightIcon || error) && "pr-11",
+						"autofill-fix",
 						className,
 					)}
 					aria-invalid={error ? "true" : "false"}
@@ -84,18 +73,10 @@ export function FormField({
 				/>
 
 				{error ? (
-					<AlertCircle
-						className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 pointer-events-none"
-						style={{ color: "var(--color-error)" }}
-					/>
+					<AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 pointer-events-none text bg-error" />
 				) : (
 					rightIcon && (
-						<div
-							className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-							style={{
-								color: "var(--color-text-tertiary)",
-							}}
-						>
+						<div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-tertiary">
 							{rightIcon}
 						</div>
 					)
@@ -111,8 +92,7 @@ export function FormField({
 			{!error && helperText && (
 				<p
 					id={`${inputId}-helper`}
-					className="mt-1 text-xs"
-					style={{ color: "var(--color-text-tertiary)" }}
+					className="mt-1 text-xs text-text-tertiary"
 				>
 					{helperText}
 				</p>

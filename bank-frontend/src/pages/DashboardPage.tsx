@@ -42,13 +42,8 @@ export function DashboardPage() {
 	const stats = statsData?.data.data;
 	const transactions = transactionsData?.data.data || [];
 
-	console.log(statsData);
-
 	return (
-		<div
-			className="min-h-screen"
-			style={{ backgroundColor: "var(--color-surface-base)" }}
-		>
+		<div className="min-h-screen bg-surface-base">
 			<Header />
 
 			<main className="container-wide py-8">
@@ -67,47 +62,21 @@ export function DashboardPage() {
 								<Card className="p-6">
 									<div className="flex items-center justify-between">
 										<div>
-											<p
-												className="text-sm mb-1"
-												style={{
-													color: "var(--color-text-secondary)",
-												}}
-											>
+											<p className="text-sm mb-1 text-text-secondary">
 												Money Sent
 											</p>
-											<p
-												className="text-2xl font-bold"
-												style={{
-													color: "var(--color-text-primary)",
-												}}
-											>
+											<p className="text-2xl font-bold text-text-primary">
 												$
 												{formatCurrency(
 													stats.sent.total,
 												)}
 											</p>
-											<p
-												className="text-xs mt-1"
-												style={{
-													color: "var(--color-text-tertiary)",
-												}}
-											>
+											<p className="text-xs mt-1 text-text-tertiary">
 												{stats.sent.count} transactions
 											</p>
 										</div>
-										<div
-											className="h-12 w-12 rounded-full flex items-center justify-center"
-											style={{
-												backgroundColor:
-													"var(--color-error-bg)",
-											}}
-										>
-											<TrendingDown
-												className="h-6 w-6"
-												style={{
-													color: "var(--color-error)",
-												}}
-											/>
+										<div className="h-12 w-12 rounded-full flex items-center justify-center bg-error-bg">
+											<TrendingDown className="h-6 w-6 text-error" />
 										</div>
 									</div>
 								</Card>
@@ -115,48 +84,22 @@ export function DashboardPage() {
 								<Card className="p-6">
 									<div className="flex items-center justify-between">
 										<div>
-											<p
-												className="text-sm mb-1"
-												style={{
-													color: "var(--color-text-secondary)",
-												}}
-											>
+											<p className="text-sm mb-1 text-text-secondary">
 												Money Received
 											</p>
-											<p
-												className="text-2xl font-bold"
-												style={{
-													color: "var(--color-text-primary)",
-												}}
-											>
+											<p className="text-2xl font-bold text-text-primary">
 												$
 												{formatCurrency(
 													stats.received.total,
 												)}
 											</p>
-											<p
-												className="text-xs mt-1"
-												style={{
-													color: "var(--color-text-tertiary)",
-												}}
-											>
+											<p className="text-xs mt-1 text-text-tertiary">
 												{stats.received.count}{" "}
 												transactions
 											</p>
 										</div>
-										<div
-											className="h-12 w-12 rounded-full flex items-center justify-center"
-											style={{
-												backgroundColor:
-													"var(--color-success-bg)",
-											}}
-										>
-											<TrendingUp
-												className="h-6 w-6"
-												style={{
-													color: "var(--color-success)",
-												}}
-											/>
+										<div className="h-12 w-12 rounded-full flex items-center justify-center bg-success-bg">
+											<TrendingUp className="h-6 w-6 text-success" />
 										</div>
 									</div>
 								</Card>
@@ -166,12 +109,7 @@ export function DashboardPage() {
 						{/* Recent Transactions */}
 						<Card>
 							<CardHeader>
-								<h2
-									className="text-lg font-semibold"
-									style={{
-										color: "var(--color-text-primary)",
-									}}
-								>
+								<h2 className="text-lg font-semibold text-text-primary">
 									Recent Transactions
 								</h2>
 							</CardHeader>
@@ -197,12 +135,7 @@ export function DashboardPage() {
 					<div className="lg:col-span-1">
 						<Card className="sticky top-6">
 							<CardHeader>
-								<h2
-									className="text-lg font-semibold flex items-center gap-2"
-									style={{
-										color: "var(--color-text-primary)",
-									}}
-								>
+								<h2 className="text-lg font-semibold flex items-center gap-2 text-text-primary">
 									<DollarSign className="h-5 w-5" />
 									Send Money
 								</h2>

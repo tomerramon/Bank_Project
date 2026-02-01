@@ -34,20 +34,20 @@ export function TransactionsPage() {
 	const pagination = data?.data.pagination;
 
 	return (
-		<div className="min-h-screen" style={{ backgroundColor: 'var(--color-surface-base)' }}>
+		<div className="min-h-screen bg-surface-base">
 			<Header />
 
 			<main className="container-default py-8">
 				<Card>
 					<CardHeader>
 						<div className="flex items-center justify-between">
-							<h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+							<h1 className="text-2xl font-bold text-text-primary">
 								All Transactions
 							</h1>
 
 							{/* Filter Buttons */}
 							<div className="flex items-center gap-2">
-								<Filter className="h-5 w-5" style={{ color: 'var(--color-text-tertiary)' }} />
+								<Filter className="h-5 w-5 text-text-tertiary" />
 								<div className="flex gap-2">
 									<Button
 										size="sm"
@@ -101,7 +101,7 @@ export function TransactionsPage() {
 							</Alert>
 						) : transactions.length === 0 ? (
 							<div className="text-center py-12">
-								<p style={{ color: 'var(--color-text-secondary)' }}>
+								<p className="text-text-secondary">
 									No transactions found
 								</p>
 							</div>
@@ -114,10 +114,11 @@ export function TransactionsPage() {
 									<div
 										className="flex items-center justify-between mt-6 pt-6"
 										style={{
-											borderTop: '1px solid var(--color-border-subtle)',
+											borderTop:
+												"1px solid var(--color-border-subtle)",
 										}}
 									>
-										<p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+										<p className="text-sm text-text-secondary">
 											Page {pagination.page} of{" "}
 											{pagination.totalPages}
 										</p>

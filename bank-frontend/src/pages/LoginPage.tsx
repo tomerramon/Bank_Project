@@ -138,15 +138,11 @@ export function LoginPage() {
 
 						{/* Footer Links */}
 						<div className="mt-6 text-center space-y-2">
-							<p
-								className="text-sm"
-								style={{ color: "var(--color-text-secondary)" }}
-							>
+							<p className="text-sm text-text-secondary">
 								Don't have an account?{" "}
 								<Link
 									to="/signup"
-									className="font-medium hover:underline"
-									style={{ color: "#00f0ff" }}
+									className="font-medium hover:underline text-neon-cyan"
 								>
 									Sign up
 								</Link>

@@ -127,10 +127,7 @@ export function VerifyOTPPage() {
 						>
 							Verify Your Account
 						</h1>
-						<p
-							className="text-center mb-6"
-							style={{ color: "var(--color-text-secondary)" }}
-						>
+						<p className="text-center mb-6 text-text-secondary">
 							We sent a 6-digit code to <strong>{email}</strong>
 						</p>
 
@@ -178,29 +175,21 @@ export function VerifyOTPPage() {
 						</form>
 
 						<div className="mt-6 text-center space-y-2">
-							<p
-								className="text-sm"
-								style={{ color: "var(--color-text-secondary)" }}
-							>
+							<p className="text-sm text-text-secondary">
 								Didn't receive the code?{" "}
 								<button
 									type="button"
 									onClick={handleResendOTP}
 									disabled={resending}
-									className="font-medium disabled:opacity-50 hover:underline"
-									style={{ color: "#00f0ff" }}
+									className="font-medium disabled:opacity-50 hover:underline text-neon-cyan"
 								>
 									{resending ? "Sending..." : "Resend"}
 								</button>
 							</p>
-							<p
-								className="text-sm"
-								style={{ color: "var(--color-text-secondary)" }}
-							>
+							<p className="text-sm text-text-secondary">
 								<Link
 									to="/login"
-									className="font-medium hover:underline"
-									style={{ color: "#00f0ff" }}
+									className="font-medium hover:underline text-neon-cyan"
 								>
 									Back to login
 								</Link>

@@ -149,15 +149,11 @@ export function SignupPage() {
 						</form>
 
 						<div className="mt-6 text-center">
-							<p
-								className="text-sm"
-								style={{ color: "var(--color-text-secondary)" }}
-							>
+							<p className="text-sm text-text-secondary">
 								Already have an account?{" "}
 								<Link
 									to="/login"
-									className="font-medium hover:underline"
-									style={{ color: "#00f0ff" }}
+									className="font-medium hover:underline text-neon-cyan"
 								>
 									Sign in
 								</Link>

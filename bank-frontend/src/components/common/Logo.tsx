@@ -68,8 +68,7 @@ export function Logo({ size = "md", showText = true, className }: LogoProps) {
 				>
 					{/* Shield icon */}
 					<Shield
-						className={cn(config.icon)}
-						style={{ color: "#00f0ff" }}
+						className={cn(config.icon, "text-neon-cyan")}
 						strokeWidth={2}
 					/>
 
@@ -115,9 +114,8 @@ export function Logo({ size = "md", showText = true, className }: LogoProps) {
 					</span>
 					{size !== "sm" && (
 						<span
-							className="text-xs font-medium tracking-wider uppercase"
+							className="text-xs font-medium tracking-wider uppercase text-text-tertiary"
 							style={{
-								color: "#9ca3af",
 								letterSpacing: "0.15em",
 							}}
 						>
