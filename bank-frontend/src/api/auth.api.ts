@@ -4,28 +4,13 @@
  * All authentication-related API calls
  */
 
-import apiClient, { type ApiResponse } from "./client.api";
 import type {
 	LoginFormData,
 	SignupFormData,
 	OTPFormData,
 } from "@/lib/validation";
-
-export interface LoginResponse {
-	token: string;
-	user: {
-		id: string;
-		email: string;
-		balance: number;
-		isVerified: boolean;
-		accountStatus: string;
-	};
-}
-
-export interface SignupResponse {
-	userId: string;
-	devOTP?: string;
-}
+import type { ApiResponse, LoginResponse, SignupResponse } from "@/types";
+import apiClient from "./client.api";
 
 /**
  * Login user
@@ -38,7 +23,6 @@ export async function login(data: LoginFormData) {
  * Signup new user
  */
 export async function signup(data: SignupFormData) {
-	console.log(data);
 	return apiClient.post<ApiResponse<SignupResponse>>("/auth/signup", data);
 }
 

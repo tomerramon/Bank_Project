@@ -10,7 +10,7 @@ import { isValidPhoneNumber } from "./format";
 export const emailSchema = z
 	.email("Invalid email format")
 	.trim()
-	.nonempty("Email is required")
+	.min(1,"Email is required")
 	.max(255, "Email too long.");
 
 /**
@@ -24,7 +24,7 @@ export const emailSchema = z
 export const passwordSchema = z
 	.string()
 	.trim()
-	.nonempty("Password is required")
+	.min(1,"Password is required")
 	.min(8, "Password must be at least 8 characters")
 	.regex(/[a-z]/, "Password must contain at least one lowercase letter")
 	.regex(/[A-Z]/, "Password must contain at least one uppercase letter")
@@ -41,7 +41,7 @@ export const passwordSchema = z
 export const phoneSchema = z
 	.string()
 	.trim()
-	.nonempty("Phone number is required")
+	.min(1,"Phone number is required")
 	.refine(
 		(phone) => isValidPhoneNumber(phone),
 		"Invalid phone number format",

@@ -6,10 +6,10 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { AuthState, User } from "@/types";
-import * as authApi from "@/api/auth.api";
-import * as userApi from "@/api/users.api";
-import { getErrorMessage } from "@/api/client.api";
+import type { AuthState, User } from "@types";
+import * as authApi from "@api/auth.api";
+import * as userApi from "@api/users.api";
+import { getErrorMessage } from "@api/client.api";
 
 export const useAuthStore = create<AuthState>()(
 	persist(

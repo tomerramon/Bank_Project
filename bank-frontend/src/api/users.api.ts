@@ -4,8 +4,8 @@
  * All user-related API calls
  */
 
-import apiClient, { type ApiResponse } from "./client.api";
-import type { User } from "@/types";
+import apiClient from "./client.api";
+import type { ApiResponse, User } from "@/types";
 
 /**
  * Get current user profile

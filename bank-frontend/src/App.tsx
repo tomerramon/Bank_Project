@@ -15,7 +15,7 @@ import { SignupPage } from "@/pages/SignupPage";
 import { VerifyOTPPage } from "@/pages/VerifyOTPPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { TransactionsPage } from "@/pages/TransactionsPage";
-// import { SettingsPage } from "@/pages/SettingsPage";
+import { SettingsPage } from "@/pages/SettingsPage";
 
 // Create QueryClient
 const queryClient = new QueryClient({
@@ -86,14 +86,14 @@ function App() {
 							</ProtectedRoute>
 						}
 					/>
-					{/* <Route
+					<Route
 						path="/settings"
 						element={
 							<ProtectedRoute>
 								<SettingsPage />
 							</ProtectedRoute>
 						}
-					/> */}
+					/>
 
 					{/* 404 Fallback */}
 					<Route

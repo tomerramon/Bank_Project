@@ -73,7 +73,7 @@ export function FormField({
 				/>
 
 				{error ? (
-					<AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 pointer-events-none text bg-error" />
+					<AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 pointer-events-none text text-error" />
 				) : (
 					rightIcon && (
 						<div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-tertiary">

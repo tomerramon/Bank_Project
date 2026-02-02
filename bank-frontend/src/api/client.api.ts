@@ -4,21 +4,8 @@
  * Proper TypeScript generics, token refresh, error handling
  */
 
+import type { ApiError, ApiResponse } from "@/types";
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
-
-// Type-safe API response wrapper
-export interface ApiResponse<T> {
-	success: boolean;
-	message: string;
-	data: T;
-}
-
-export interface ApiError {
-	success: false;
-	message: string;
-	errors?: string[];
-	details?: Record<string, unknown>;
-}
 
 // Create axios instance
 const apiClient = axios.create({

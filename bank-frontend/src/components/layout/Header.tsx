@@ -40,37 +40,21 @@ export function Header() {
 					<nav className="hidden md:flex items-center gap-6">
 						<Link
 							to="/dashboard"
-							className="font-medium transition-colors"
-							style={{
-								color: "var(--color-text-secondary)",
-							}}
-							onMouseEnter={(e) => {
-								e.currentTarget.style.color =
-									"var(--color-brand-500)";
-							}}
-							onMouseLeave={(e) => {
-								e.currentTarget.style.color =
-									"var(--color-text-secondary)";
-							}}
+							className="font-medium transition-colors text-text-secondary hover:text-brand-500"
 						>
 							Dashboard
 						</Link>
 						<Link
 							to="/transactions"
-							className="font-medium transition-colors"
-							style={{
-								color: "var(--color-text-secondary)",
-							}}
-							onMouseEnter={(e) => {
-								e.currentTarget.style.color =
-									"var(--color-brand-500)";
-							}}
-							onMouseLeave={(e) => {
-								e.currentTarget.style.color =
-									"var(--color-text-secondary)";
-							}}
+							className="font-medium transition-colors text-text-secondary hover:text-brand-500"
 						>
 							Transactions
+						</Link>
+						<Link
+							to="/settings"
+							className="font-medium transition-colors text-text-secondary hover:text-brand-500"
+						>
+							Settings
 						</Link>
 					</nav>
 

@@ -4,12 +4,13 @@
  * All transaction-related API calls
  */
 
-import apiClient, { type ApiResponse } from "./client.api";
+import apiClient from "./client.api";
 import type {
 	Transaction,
 	TransferResponse,
 	TransactionStats,
 	PaginatedResponse,
+	ApiResponse,
 } from "@/types";
 import type { TransferFormData } from "@/lib/validation";
 

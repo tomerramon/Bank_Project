@@ -8,14 +8,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail, Lock, Phone } from "lucide-react";
 
-import { Button } from "@/components/common/Button";
-import { FormField } from "@/components/common/FormField";
-import { Alert } from "@/components/common/Alert";
-import { Card, CardContent } from "@/components/common/Card";
-import { Logo } from "@/components/common/Logo";
-import * as authApi from "@/api/auth.api";
-import { signupFormSchema, type SignupFormData } from "@/lib/validation";
-import { getErrorMessage } from "@/api/client.api";
+import { Button } from "@components/common/Button";
+import { FormField } from "@components/common/FormField";
+import { Alert } from "@components/common/Alert";
+import { Card, CardContent } from "@components/common/Card";
+import { Logo } from "@components/common/Logo";
+import { signupFormSchema, type SignupFormData } from "@lib/validation";
+import { useSignup } from "@hooks/Useauth";
 
 export function SignupPage() {
 	const navigate = useNavigate();
@@ -24,22 +23,24 @@ export function SignupPage() {
 	const {
 		register,
 		handleSubmit,
-		formState: { errors, isSubmitting },
+		formState: { errors },
 	} = useForm<SignupFormData>({
 		resolver: zodResolver(signupFormSchema),
 	});
 
-	const onSubmit = async (data: SignupFormData) => {
-		try {
-			setError(null);
-			const response = await authApi.signup(data);
-			const { userId } = response.data.data;
+	const signupMutation = useSignup({
+		onSuccess: (data) => {
+			const email = document.getElementById("Email");
+			navigate("/verify-otp", { state: { userId: data.userId, email } });
+		},
+		onError: (err) => {
+			setError(err);
+		},
+	});
 
-			// Navigate to OTP verification with userId
-			navigate("/verify-otp", { state: { userId, email: data.email } });
-		} catch (err) {
-			setError(getErrorMessage(err));
-		}
+	const onSubmit = async (data: SignupFormData) => {
+		setError(null);
+		signupMutation.mutate(data);
 	};
 
 	return (
@@ -108,7 +109,7 @@ export function SignupPage() {
 								type="submit"
 								variant="primary"
 								fullWidth
-								isLoading={isSubmitting}
+								isLoading={signupMutation.isPending}
 							>
 								Create Account
 							</Button>

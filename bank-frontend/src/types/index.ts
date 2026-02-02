@@ -1,6 +1,7 @@
 /**
  * TypeScript Types
  *
+ * Single source of truth for all application types
  * All application types matching backend API
  */
 
@@ -67,13 +68,7 @@ export interface User {
 
 export interface LoginResponse {
 	token: string;
-	user: {
-		id: string;
-		email: string;
-		balance: number;
-		isVerified: boolean;
-		accountStatus: string;
-	};
+	user: User;
 }
 
 export interface SignupResponse {
@@ -86,10 +81,10 @@ export interface SignupResponse {
 // ==========================================
 
 export interface Transaction {
-	_id: string;
+	id: string;
 	userId: string;
 	peerUserId: {
-		_id: string;
+		id: string;
 		email: string;
 	};
 	amount: number;

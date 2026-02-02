@@ -8,35 +8,38 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail, Lock } from "lucide-react";
 
-import { Button } from "@/components/common/Button";
-import { FormField } from "@/components/common/FormField";
-import { Alert } from "@/components/common/Alert";
-import { Card, CardContent } from "@/components/common/Card";
-import { Logo } from "@/components/common/Logo";
-import { useAuthStore } from "@/store/authStore";
-import { loginFormSchema, type LoginFormData } from "@/lib/validation";
+import { Button } from "@components/common/Button";
+import { FormField } from "@components/common/FormField";
+import { Alert } from "@components/common/Alert";
+import { Card, CardContent } from "@components/common/Card";
+import { Logo } from "@components/common/Logo";
+import { loginFormSchema, type LoginFormData } from "@lib/validation";
+import { useLogin } from "@hooks/Useauth";
 
 export function LoginPage() {
 	const navigate = useNavigate();
-	const { login } = useAuthStore();
 	const [error, setError] = useState<string | null>(null);
 
 	const {
 		register,
 		handleSubmit,
-		formState: { errors, isSubmitting },
+		formState: { errors },
 	} = useForm<LoginFormData>({
 		resolver: zodResolver(loginFormSchema),
 	});
 
-	const onSubmit = async (data: LoginFormData) => {
-		try {
-			setError(null);
-			await login(data.email, data.password);
+	const loginMutation = useLogin({
+		onSuccess: () => {
 			navigate("/dashboard");
-		} catch (err) {
-			setError(err instanceof Error ? err.message : "Login failed");
-		}
+		},
+		onError: (err) => {
+			setError(err);
+		},
+	});
+
+	const onSubmit = async (data: LoginFormData) => {
+		setError(null);
+		loginMutation.mutate(data);
 	};
 
 	return (
@@ -96,7 +99,7 @@ export function LoginPage() {
 								type="submit"
 								variant="primary"
 								fullWidth
-								isLoading={isSubmitting}
+								isLoading={loginMutation.isPending}
 							>
 								Sign In
 							</Button>

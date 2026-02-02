@@ -8,21 +8,19 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { KeyRound } from "lucide-react";
 
-import { Button } from "@/components/common/Button";
-import { FormField } from "@/components/common/FormField";
-import { Alert } from "@/components/common/Alert";
-import { Card, CardContent } from "@/components/common/Card";
-import { Logo } from "@/components/common/Logo";
-import * as authApi from "@/api/auth.api";
-import { otpFormSchema, type OTPFormData } from "@/lib/validation";
-import { getErrorMessage } from "@/api/client.api";
+import { Button } from "@components/common/Button";
+import { FormField } from "@components/common/FormField";
+import { Alert } from "@components/common/Alert";
+import { Card, CardContent } from "@components/common/Card";
+import { Logo } from "@components/common/Logo";
+import { otpFormSchema, type OTPFormData } from "@lib/validation";
+import { useResendOTP, useVerifyOTP } from "@hooks/Useauth";
 
 export function VerifyOTPPage() {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState<string | null>(null);
-	const [resending, setResending] = useState(false);
 
 	// Get userId from navigation state
 	const { userId, email } =
@@ -37,42 +35,42 @@ export function VerifyOTPPage() {
 	const {
 		register,
 		handleSubmit,
-		formState: { errors, isSubmitting },
+		formState: { errors },
 	} = useForm<OTPFormData>({
 		resolver: zodResolver(otpFormSchema),
 	});
 
-	const onSubmit = async (data: OTPFormData) => {
-		if (!userId) return;
-
-		try {
-			setError(null);
-			await authApi.verifyOTP(userId, data);
+	const verifyOTPMutation = useVerifyOTP(userId || "", {
+		onSuccess: () => {
 			setSuccess("Account verified! Redirecting to login...");
-
 			setTimeout(() => {
 				navigate("/login");
 			}, 2000);
-		} catch (err) {
-			setError(getErrorMessage(err));
-		}
+		},
+
+		onError: (err) => {
+			setError(err);
+		},
+	});
+
+	const resendOTPMutation = useResendOTP(userId || "", {
+		onSuccess: () => {
+			setSuccess("New verification code sent!");
+			setTimeout(() => setSuccess(null), 3000);
+		},
+		onError: (err) => {
+			setError(err);
+		},
+	});
+
+	const onSubmit = async (data: OTPFormData) => {
+		setError(null);
+		verifyOTPMutation.mutate(data);
 	};
 
 	const handleResendOTP = async () => {
-		if (!userId) return;
-
-		try {
-			setResending(true);
-			setError(null);
-			await authApi.resendOTP(userId);
-			setSuccess("New verification code sent!");
-
-			setTimeout(() => setSuccess(null), 3000);
-		} catch (err) {
-			setError(getErrorMessage(err));
-		} finally {
-			setResending(false);
-		}
+		setError(null);
+		resendOTPMutation.mutate();
 	};
 
 	if (!userId) {
@@ -135,7 +133,7 @@ export function VerifyOTPPage() {
 								type="submit"
 								variant="primary"
 								fullWidth
-								isLoading={isSubmitting}
+								isLoading={verifyOTPMutation.isPending}
 							>
 								Verify Account
 							</Button>
@@ -147,10 +145,12 @@ export function VerifyOTPPage() {
 								<button
 									type="button"
 									onClick={handleResendOTP}
-									disabled={resending}
+									disabled={resendOTPMutation.isPending}
 									className="font-medium disabled:opacity-50 hover:underline text-neon-cyan"
 								>
-									{resending ? "Sending..." : "Resend"}
+									{resendOTPMutation.isPending
+										? "Sending..."
+										: "Resend"}
 								</button>
 							</p>
 							<p className="text-sm text-text-secondary">

@@ -5,22 +5,25 @@
 import { useQuery } from "@tanstack/react-query";
 import { DollarSign, TrendingUp, TrendingDown } from "lucide-react";
 
-import { Header } from "@/components/layout/Header";
-import { BalanceCard } from "@/components/features/dashboard/BalanceCard";
-import { RecentTransactions } from "@/components/features/dashboard/RecentTransactions";
-import { TransferForm } from "@/components/features/transactions/TransferForm";
-import { Card, CardHeader, CardContent } from "@/components/common/Card";
-import { Spinner } from "@/components/common/Spinner";
-import { Alert } from "@/components/common/Alert";
-import * as transactionsApi from "@/api/transactions.api";
-import { formatCurrency } from "@/lib/format";
+import { Header } from "@components/layout/Header";
+import { BalanceCard } from "@components/features/dashboard/BalanceCard";
+import { RecentTransactions } from "@components/features/dashboard/RecentTransactions";
+import { TransferForm } from "@components/features/transactions/TransferForm";
+import { Card, CardHeader, CardContent } from "@components/common/Card";
+import { Spinner } from "@components/common/Spinner";
+import { Alert } from "@components/common/Alert";
+import * as transactionsApi from "@api/transactions.api";
+import { formatCurrency } from "@lib/format";
+import { useBalance } from "@hooks/Usebalance";
 
 export function DashboardPage() {
 	// Fetch balance
-	const { data: balanceData, isLoading: balanceLoading } = useQuery({
-		queryKey: ["balance"],
-		queryFn: () => transactionsApi.getBalance(),
-	});
+	const { data: balance, isLoading: balanceLoading } = useBalance();
+	const {data: stats} = useTransactionStats();
+	// const { data: balanceData, isLoading: balanceLoading } = useQuery({
+	// 	queryKey: ["balance"],
+	// 	queryFn: () => transactionsApi.getBalance(),
+	// });
 
 	// Fetch transaction stats
 	const { data: statsData } = useQuery({
