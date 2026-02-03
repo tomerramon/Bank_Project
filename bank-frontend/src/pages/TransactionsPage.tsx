@@ -3,7 +3,6 @@
  */
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Filter } from "lucide-react";
 
 import { Header } from "@/components/layout/Header";
@@ -12,7 +11,7 @@ import { Card, CardHeader, CardContent } from "@/components/common/Card";
 import { Button } from "@/components/common/Button";
 import { Spinner } from "@/components/common/Spinner";
 import { Alert } from "@/components/common/Alert";
-import * as transactionsApi from "@/api/transactions.api";
+import { useTransactions } from "@/hooks/useTransactions";
 
 type FilterType = "all" | "T_IN" | "T_OUT";
 
@@ -20,18 +19,19 @@ export function TransactionsPage() {
 	const [currentPage, setCurrentPage] = useState(1);
 	const [filter, setFilter] = useState<FilterType>("all");
 
-	const { data, isLoading, error } = useQuery({
-		queryKey: ["transactions", currentPage, filter],
-		queryFn: () =>
-			transactionsApi.getTransactions({
-				page: currentPage,
-				limit: 20,
-				direction: filter === "all" ? undefined : filter,
-			}),
+	// Fetch recent transactions
+	const {
+		data: transactionsData,
+		isLoading: transactionsLoading,
+		error: transactionsError,
+	} = useTransactions({
+		page: currentPage,
+		limit: 20,
+		direction: filter === "all" ? undefined : filter,
 	});
 
-	const transactions = data?.data.data || [];
-	const pagination = data?.data.pagination;
+	const transactions = transactionsData?.data || [];
+	const pagination = transactionsData?.pagination;
 
 	return (
 		<div className="min-h-screen bg-surface-base">
@@ -88,14 +88,14 @@ export function TransactionsPage() {
 					</CardHeader>
 
 					<CardContent>
-						{isLoading ? (
+						{transactionsLoading ? (
 							<div className="flex justify-center py-12">
 								<Spinner
 									size="lg"
 									text="Loading transactions..."
 								/>
 							</div>
-						) : error ? (
+						) : transactionsError ? (
 							<Alert variant="error">
 								Failed to load transactions. Please try again.
 							</Alert>

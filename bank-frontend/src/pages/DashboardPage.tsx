@@ -2,7 +2,6 @@
  * Dashboard Page
  */
 
-import { useQuery } from "@tanstack/react-query";
 import { DollarSign, TrendingUp, TrendingDown } from "lucide-react";
 
 import { Header } from "@components/layout/Header";
@@ -12,38 +11,26 @@ import { TransferForm } from "@components/features/transactions/TransferForm";
 import { Card, CardHeader, CardContent } from "@components/common/Card";
 import { Spinner } from "@components/common/Spinner";
 import { Alert } from "@components/common/Alert";
-import * as transactionsApi from "@api/transactions.api";
 import { formatCurrency } from "@lib/format";
-import { useBalance } from "@hooks/Usebalance";
+import { useBalance } from "@hooks/useBalance";
+import {
+	useRecentTransactions,
+	useTransactionStats,
+} from "@/hooks/useTransactions";
 
 export function DashboardPage() {
 	// Fetch balance
 	const { data: balance, isLoading: balanceLoading } = useBalance();
-	const {data: stats} = useTransactionStats();
-	// const { data: balanceData, isLoading: balanceLoading } = useQuery({
-	// 	queryKey: ["balance"],
-	// 	queryFn: () => transactionsApi.getBalance(),
-	// });
 
 	// Fetch transaction stats
-	const { data: statsData } = useQuery({
-		queryKey: ["transaction-stats"],
-		queryFn: () => transactionsApi.getTransactionStats(),
-	});
+	const { data: stats } = useTransactionStats();
 
 	// Fetch recent transactions
 	const {
-		data: transactionsData,
+		data: transactions,
 		isLoading: transactionsLoading,
 		error: transactionsError,
-	} = useQuery({
-		queryKey: ["recent-transactions"],
-		queryFn: () => transactionsApi.getRecentTransactions(10),
-	});
-
-	const balance = balanceData?.data.data.balance || 0;
-	const stats = statsData?.data.data;
-	const transactions = transactionsData?.data.data || [];
+	} = useRecentTransactions();
 
 	return (
 		<div className="min-h-screen bg-surface-base">
@@ -55,7 +42,7 @@ export function DashboardPage() {
 					<div className="lg:col-span-2 space-y-6">
 						{/* Balance Card */}
 						<BalanceCard
-							balance={balance}
+							balance={balance || 0}
 							isLoading={balanceLoading}
 						/>
 
@@ -127,7 +114,7 @@ export function DashboardPage() {
 									</Alert>
 								) : (
 									<RecentTransactions
-										transactions={transactions}
+										transactions={transactions || []}
 									/>
 								)}
 							</CardContent>

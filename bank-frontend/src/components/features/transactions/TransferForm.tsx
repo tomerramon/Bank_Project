@@ -5,18 +5,15 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
 import { Send, Mail, DollarSign } from "lucide-react";
 
 import { Button } from "@/components/common/Button";
 import { FormField } from "@/components/common/FormField";
 import { Alert } from "@/components/common/Alert";
-import * as transactionsApi from "@/api/transactions.api";
 import { transferFormSchema, type TransferFormData } from "@/lib/validation";
-import { getErrorMessage } from "@/api/client.api";
+import { useTransfer } from "@/hooks/useTransfer";
 
 export function TransferForm() {
-	const queryClient = useQueryClient();
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState<string | null>(null);
 
@@ -29,33 +26,25 @@ export function TransferForm() {
 		resolver: zodResolver(transferFormSchema),
 	});
 
-	const onSubmit = async (data: TransferFormData) => {
-		try {
-			setError(null);
-			setSuccess(null);
-
-			await transactionsApi.transferMoney(data);
-
+	const transferMutation = useTransfer({
+		onSuccess: (data) => {
 			setSuccess(
-				`Successfully sent $${data.amount.toFixed(2)} to ${data.toEmail}`,
+				`Successfully sent $${data.amount.toFixed(2)} to ${data.to}`,
 			);
-
-			// Refresh queries
-			queryClient.invalidateQueries({ queryKey: ["balance"] });
-			queryClient.invalidateQueries({
-				queryKey: ["recent-transactions"],
-			});
-			queryClient.invalidateQueries({ queryKey: ["transactions"] });
-			queryClient.invalidateQueries({ queryKey: ["transaction-stats"] });
-
-			// Reset form
 			reset();
-
 			// Clear success message after 5 seconds
 			setTimeout(() => setSuccess(null), 5000);
-		} catch (err) {
-			setError(getErrorMessage(err));
-		}
+		},
+		onError: (err) => {
+			setError(err);
+		},
+	});
+
+	const onSubmit = async (data: TransferFormData) => {
+		setError(null);
+		setSuccess(null);
+
+		transferMutation.mutate(data);
 	};
 
 	return (

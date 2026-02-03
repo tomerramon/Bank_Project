@@ -29,18 +29,30 @@ export function SignupPage() {
 	});
 
 	const signupMutation = useSignup({
-		onSuccess: (data) => {
-			const email = document.getElementById("Email");
-			navigate("/verify-otp", { state: { userId: data.userId, email } });
-		},
 		onError: (err) => {
 			setError(err);
 		},
+		// onSuccess: (responseData) => {
+		// 	navigate("/verify-otp", {
+		// 		state: {
+		// 			userId: responseData.userId,
+		// 		},
+		// 	});
+		// },
 	});
 
 	const onSubmit = async (data: SignupFormData) => {
 		setError(null);
-		signupMutation.mutate(data);
+		signupMutation.mutate(data, {
+			onSuccess: (responseData) => {
+				navigate("/verify-otp", {
+					state: {
+						userId: responseData.userId,
+						email: data.email,
+					},
+				});
+			},
+		});
 	};
 
 	return (

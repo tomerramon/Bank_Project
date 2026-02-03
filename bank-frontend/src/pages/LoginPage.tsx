@@ -34,6 +34,7 @@ export function LoginPage() {
 		},
 		onError: (err) => {
 			setError(err);
+			setTimeout(() => setError(null), 5000);
 		},
 	});
 
