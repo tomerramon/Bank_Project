@@ -129,18 +129,27 @@ export interface TransactionStats {
 // STORE TYPES
 // ==========================================
 
-export interface AuthState {
+/**
+ * Auth Store State
+ *
+ * Used by Zustand store - defines state shape and actions
+ */
+export interface AuthStore {
+	// State
 	user: User | null;
 	token: string | null;
 	isAuthenticated: boolean;
-	isLoading: boolean;
-	login: (email: string, password: string) => Promise<void>;
-	logout: () => Promise<void>;
+
+	// Actions (Pure state setters only - NO API calls)
+	setAuth: (user: User, token: string) => void;
+	clearAuth: () => void;
 	setUser: (user: User) => void;
-	refreshUser: () => Promise<void>;
 }
 
-export interface ThemeState {
+/**
+ * Theme Store State
+ */
+export interface ThemeStore {
 	theme: "light" | "dark";
 	toggleTheme: () => void;
 	setTheme: (theme: "light" | "dark") => void;

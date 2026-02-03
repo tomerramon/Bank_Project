@@ -6,79 +6,37 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { AuthState, User } from "@types";
-import * as authApi from "@api/auth.api";
-import * as userApi from "@api/users.api";
-import { getErrorMessage } from "@api/client.api";
+import type { AuthStore, User } from "@/types";
 
-export const useAuthStore = create<AuthState>()(
+export const useAuthStore = create<AuthStore>()(
 	persist(
-		(set, get) => ({
+		(set) => ({
 			user: null,
 			token: null,
 			isAuthenticated: false,
-			isLoading: false,
 
 			/**
-			 * Login user
+			 * Set authenticated user
+			 * Called by login hook after successful API response
 			 */
-			login: async (email: string, password: string) => {
-				set({ isLoading: true });
-
-				try {
-					const { data } = await authApi.login({ email, password });
-					const { token, user } = data.data;
-
-					localStorage.setItem("accessToken", token);
-
-					set({
-						user: user as unknown as User,
-						token,
-						isAuthenticated: true,
-						isLoading: false,
-					});
-				} catch (error) {
-					set({ isLoading: false });
-					throw new Error(getErrorMessage(error));
-				}
+			setAuth: (user: User, token: string) => {
+				set({ user, token, isAuthenticated: true });
 			},
 
 			/**
-			 * Logout user
+			 * Clear authentication
+			 * Called by logout hook
 			 */
-			logout: async () => {
-				try {
-					await authApi.logout();
-				} catch (error) {
-					console.error("Logout API error:", error);
-				} finally {
-					localStorage.removeItem("accessToken");
-					set({
-						user: null,
-						token: null,
-						isAuthenticated: false,
-					});
-				}
+			clearAuth: () => {
+				set({ user: null, token: null, isAuthenticated: false });
 			},
 
 			/**
-			 * Update user (after profile changes)
+			 * Update user data
+			 * Called by hooks after profile updates
 			 */
 			setUser: (user: User) => {
 				set({ user });
-			},
-
-			/**
-			 * Refresh user data from backend
-			 */
-			refreshUser: async () => {
-				try {
-					const { data } = await userApi.getProfile();
-					set({ user: data.data });
-				} catch (error) {
-					console.error("Failed to refresh user:", error);
-					get().logout();
-				}
 			},
 		}),
 		{

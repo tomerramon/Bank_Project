@@ -8,56 +8,43 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { ThemeState } from "@/types";
+import type { ThemeStore } from "@/types";
 
-export const useThemeStore = create<ThemeState>()(
+export const useThemeStore = create<ThemeStore>()(
 	persist(
-		(set) => ({
-			// Initial theme (will be overridden by persist middleware)
-			theme: "light",
+		(set, get) => ({
+			// Initial state
+			theme: "dark",
 
 			/**
-			 * Toggle between light and dark
+			 * Toggle between light and dark theme
 			 */
 			toggleTheme: () => {
-				set((state) => {
-					const newTheme = state.theme === "light" ? "dark" : "light";
+				const newTheme = get().theme === "light" ? "dark" : "light";
+				set({ theme: newTheme });
 
-					// Apply to DOM
-					if (newTheme === "dark") {
-						document.documentElement.classList.add("dark");
-					} else {
-						document.documentElement.classList.remove("dark");
-					}
-
-					return { theme: newTheme };
-				});
+				// Update document class for CSS
+				document.documentElement.classList.remove("light", "dark");
+				document.documentElement.classList.add(newTheme);
 			},
 
 			/**
 			 * Set specific theme
 			 */
 			setTheme: (theme: "light" | "dark") => {
-				// Apply to DOM
-				if (theme === "dark") {
-					document.documentElement.classList.add("dark");
-				} else {
-					document.documentElement.classList.remove("dark");
-				}
-
 				set({ theme });
+
+				// Update document class for CSS
+				document.documentElement.classList.remove("light", "dark");
+				document.documentElement.classList.add(theme);
 			},
 		}),
 		{
 			name: "theme-storage",
 			onRehydrateStorage: () => (state) => {
-				// Apply theme on page load
-				if (state) {
-					if (state.theme === "dark") {
-						document.documentElement.classList.add("dark");
-					} else {
-						document.documentElement.classList.remove("dark");
-					}
+				// Apply theme on initial load
+				if (state?.theme) {
+					document.documentElement.classList.add(state.theme);
 				}
 			},
 		},
