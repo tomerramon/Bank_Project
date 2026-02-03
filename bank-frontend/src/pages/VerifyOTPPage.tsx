@@ -14,7 +14,7 @@ import { Alert } from "@components/common/Alert";
 import { Card, CardContent } from "@components/common/Card";
 import { Logo } from "@components/common/Logo";
 import { otpFormSchema, type OTPFormData } from "@lib/validation";
-import { useResendOTP, useVerifyOTP } from "@hooks/Useauth";
+import { useResendOTP, useVerifyOTP } from "@/hooks/useAuth";
 
 export function VerifyOTPPage() {
 	const navigate = useNavigate();

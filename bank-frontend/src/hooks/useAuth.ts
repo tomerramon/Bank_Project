@@ -47,7 +47,7 @@ export function useLogin(options?: UseLoginOptions) {
 
 	return useMutation({
 		mutationFn: async (data: LoginFormData) => {
-			await storeLogin(data.email, data.password); // authStore.login() calls API + sets token + sets user
+			await storeLogin(data.email, data.password);
 		},
 
 		onSuccess: () => {
@@ -86,8 +86,7 @@ interface UseSignupOptions {
  *
  * @example
  * const signup = useSignup({
- *   onSuccess: ({ userId, devOTP }) => {
- *     console.log('Dev OTP:', devOTP); // Development only
+ *   onSuccess: ({ userId }) => {
  *     navigate('/verify-otp', { state: { userId, email } });
  *   },
  *   onError: (err) => setError(err)
@@ -214,44 +213,43 @@ export function useResendOTP(userId: string, options?: UseResendOTPOptions) {
 // ==========================================
 
 interface UseLogoutOptions {
-	onSuccess?: () => void;
-	onError?: (error: string) => void;
+  onSuccess?: () => void;
+  onError?: (error: string) => void;
 }
 
 /**
  * Logout mutation
- *
+ * 
  * Clears token + user from store
  * Invalidates refresh token on backend
- *
+ * 
  * @param options - Success/error callbacks
  * @returns Mutation result
- *
+ * 
  * @example
  * const logout = useLogout({
  *   onSuccess: () => navigate('/login')
  * });
- *
- *
+ * 
  * <button onClick={() => logout.mutate()}>
  *   Logout
  * </button>
  */
 export function useLogout(options?: UseLogoutOptions) {
-	const { logout: storeLogout } = useAuthStore();
+  const { logout: storeLogout } = useAuthStore();
 
-	return useMutation({
-		mutationFn: async () => {
-			await storeLogout(); // authStore.logout() calls API + clears token + clears user
-		},
+  return useMutation({
+    mutationFn: async () => {
+      await storeLogout();
+    },
 
-		onSuccess: () => {
-			options?.onSuccess?.();
-		},
+    onSuccess: () => {
+      options?.onSuccess?.();
+    },
 
-		onError: (error) => {
-			const message = getErrorMessage(error);
-			options?.onError?.(message);
-		},
-	});
+    onError: (error) => {
+      const message = getErrorMessage(error);
+      options?.onError?.(message);
+    },
+  });
 }

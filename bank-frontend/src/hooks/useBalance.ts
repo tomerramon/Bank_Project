@@ -5,7 +5,8 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import * as transactionsApi from "@api/transactions.api";
+import * as transactionsApi from "@/api/transactions.api";
+import { queryKeys } from "@/lib/queryKeys";
 
 /**
  * Get user's current balance
@@ -18,12 +19,12 @@ import * as transactionsApi from "@api/transactions.api";
  */
 export function useBalance() {
 	return useQuery({
-		queryKey: ["balance"],
+		queryKey: queryKeys.balance,
 		queryFn: async () => {
 			const res = await transactionsApi.getBalance();
 			return res.data.data.balance;
 		},
-		staleTime: 3000, // 30 seconds - balance doesnt change that often.
-		gcTime: 5 * 60 * 1000, // 5 minutes caching.
+		staleTime: 30000, // 30 seconds - balance doesn't change that often
+		gcTime: 5 * 60 * 1000, // 5 minutes caching
 	});
 }

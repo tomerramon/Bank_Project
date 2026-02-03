@@ -26,8 +26,10 @@ export const queryKeys = {
 			startDate?: string;
 			endDate?: string;
 		}) => [...TRANSACTION_KEYS, "list", filters] as const,
+
 		recent: (limit?: number) =>
 			[...TRANSACTION_KEYS, "recent", limit] as const,
+
 		byReference: (reference: string) =>
 			[...TRANSACTION_KEYS, "reference", reference] as const,
 		stats: [...TRANSACTION_KEYS, "stats"] as const,

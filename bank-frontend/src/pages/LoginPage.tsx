@@ -14,7 +14,7 @@ import { Alert } from "@components/common/Alert";
 import { Card, CardContent } from "@components/common/Card";
 import { Logo } from "@components/common/Logo";
 import { loginFormSchema, type LoginFormData } from "@lib/validation";
-import { useLogin } from "@hooks/Useauth";
+import { useLogin } from "@/hooks/useAuth";
 
 export function LoginPage() {
 	const navigate = useNavigate();

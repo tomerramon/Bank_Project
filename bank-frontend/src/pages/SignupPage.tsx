@@ -14,7 +14,7 @@ import { Alert } from "@components/common/Alert";
 import { Card, CardContent } from "@components/common/Card";
 import { Logo } from "@components/common/Logo";
 import { signupFormSchema, type SignupFormData } from "@lib/validation";
-import { useSignup } from "@hooks/Useauth";
+import { useSignup } from "@/hooks/useAuth";
 
 export function SignupPage() {
 	const navigate = useNavigate();
