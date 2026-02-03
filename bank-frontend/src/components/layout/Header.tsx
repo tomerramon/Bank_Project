@@ -8,18 +8,24 @@ import { Logo } from "@/components/common/Logo";
 import { Button } from "@/components/common/Button";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { useAuthStore } from "@/store/authStore";
+import { useLogout } from "@/hooks/useAuth";
 
 export function Header() {
 	const navigate = useNavigate();
-	const { user, logout } = useAuthStore();
 
-	const handleLogout = async () => {
-		try {
-			await logout();
+	const { user } = useAuthStore();
+
+	const logoutMutation = useLogout({
+		onSuccess: () => {
 			navigate("/login");
-		} catch (error) {
-			console.error("Logout failed:", error);
-		}
+		},
+		onError: () => {
+			navigate("/login");
+		},
+	});
+
+	const onSubmit = async () => {
+		logoutMutation.mutate();
 	};
 
 	return (
@@ -99,7 +105,7 @@ export function Header() {
 						<Button
 							variant="ghost"
 							size="sm"
-							onClick={handleLogout}
+							onClick={onSubmit}
 							title="Logout"
 						>
 							<LogOut className="h-4 w-4" />
