@@ -10,7 +10,7 @@ import { isValidPhoneNumber } from "./format";
 export const emailSchema = z
 	.email("Invalid email format")
 	.trim()
-	.min(1,"Email is required")
+	.min(1, "Email is required")
 	.max(255, "Email too long.");
 
 /**
@@ -24,7 +24,6 @@ export const emailSchema = z
 export const passwordSchema = z
 	.string()
 	.trim()
-	.min(1,"Password is required")
 	.min(8, "Password must be at least 8 characters")
 	.regex(/[a-z]/, "Password must contain at least one lowercase letter")
 	.regex(/[A-Z]/, "Password must contain at least one uppercase letter")
@@ -41,7 +40,7 @@ export const passwordSchema = z
 export const phoneSchema = z
 	.string()
 	.trim()
-	.min(1,"Phone number is required")
+	.min(1, "Phone number is required")
 	.refine(
 		(phone) => isValidPhoneNumber(phone),
 		"Invalid phone number format",
@@ -60,10 +59,10 @@ export const otpSchema = z
  * Amount validator (for transactions)
  */
 export const amountSchema = z
-	.number({ error: "Amount must be a number." })
-	.positive("Amount must be greater then 0.")
+	.number({ message: "Amount must be a number" })
+	.positive("Amount must be greater than 0")
 	.min(0.01, "Minimum amount is $0.01")
-	.max(10000, "Maximum  amount is $10,000")
+	.max(10000, "Maximum amount is $10,000")
 	.refine((amount) => Number.isFinite(amount), "Invalid amount");
 
 // ==========================================
@@ -100,7 +99,7 @@ export const otpFormSchema = z
 	.strict();
 
 /**
- * Helper function for amount clean  for better validations.
+ * Helper function for amount cleaning
  */
 const parseAmount = (val: unknown) => {
 	if (typeof val === "string") {
@@ -109,18 +108,14 @@ const parseAmount = (val: unknown) => {
 	}
 	return val;
 };
+
 /**
  * Transfer form schema
  */
 export const transferFormSchema = z
 	.object({
 		toEmail: emailSchema,
-		amount: z
-			.any()
-			// 2. Run your cleaning logic
-			.transform(parseAmount)
-			// 3. Pipe to your business rules (min, max, etc.)
-			.pipe(amountSchema),
+		amount: z.any().transform(parseAmount).pipe(amountSchema),
 	})
 	.strict();
 

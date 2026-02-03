@@ -5,7 +5,7 @@
  * Prevents typos and makes refactoring easier
  */
 
-const TRANSACTION_KEYS = ["transactions"] as const;
+const TRANSACTION_KEY = ["transactions"] as const;
 
 export const queryKeys = {
 	// Auth
@@ -18,20 +18,20 @@ export const queryKeys = {
 
 	// Transactions
 	transactions: {
-		all: TRANSACTION_KEYS,
+		all: TRANSACTION_KEY,
 		list: (filters?: {
 			page?: number;
 			limit?: number;
 			direction?: "T_IN" | "T_OUT";
 			startDate?: string;
 			endDate?: string;
-		}) => [...TRANSACTION_KEYS, "list", filters] as const,
+		}) => [...TRANSACTION_KEY, "list", filters] as const,
 
 		recent: (limit?: number) =>
-			[...TRANSACTION_KEYS, "recent", limit] as const,
+			[...TRANSACTION_KEY, "recent", limit] as const,
 
 		byReference: (reference: string) =>
-			[...TRANSACTION_KEYS, "reference", reference] as const,
-		stats: [...TRANSACTION_KEYS, "stats"] as const,
+			[...TRANSACTION_KEY, "reference", reference] as const,
+		stats: [...TRANSACTION_KEY, "stats"] as const,
 	},
 } as const;
