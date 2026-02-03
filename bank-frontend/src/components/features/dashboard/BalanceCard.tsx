@@ -13,7 +13,7 @@ interface BalanceCardProps {
 
 export function BalanceCard({ balance, isLoading }: BalanceCardProps) {
 	return (
-		<Card className="p-6 bg-gradient-to-br from-brand-500 to-brand-700">
+		<Card className="p-6 bg-linear-to-br from-brand-500 to-brand-700">
 			<div className="flex items-center justify-between">
 				<div>
 					<p className="text-white/80 text-sm mb-2">Total Balance</p>
@@ -21,7 +21,7 @@ export function BalanceCard({ balance, isLoading }: BalanceCardProps) {
 						<div className="h-10 w-32 bg-white/20 rounded animate-pulse" />
 					) : (
 						<p className="text-white text-4xl font-bold tabular-nums">
-							${formatCurrency(balance)}
+							{formatCurrency(balance)}
 						</p>
 					)}
 				</div>

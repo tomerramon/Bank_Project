@@ -56,7 +56,6 @@ export function DashboardPage() {
 												Money Sent
 											</p>
 											<p className="text-2xl font-bold text-text-primary">
-												$
 												{formatCurrency(
 													stats.sent.total,
 												)}
@@ -78,7 +77,6 @@ export function DashboardPage() {
 												Money Received
 											</p>
 											<p className="text-2xl font-bold text-text-primary">
-												$
 												{formatCurrency(
 													stats.received.total,
 												)}

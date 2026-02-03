@@ -7,6 +7,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import * as authApi from "@api/auth.api";
+import { getProfile } from "@api/users.api";
 import { useAuthStore } from "@store/authStore";
 import { getErrorMessage } from "@api/client.api";
 import type {
@@ -43,14 +44,19 @@ interface UseLoginOptions {
  * </form>
  */
 export function useLogin(options?: UseLoginOptions) {
-	const { login: storeLogin } = useAuthStore();
+	const { setAuth } = useAuthStore();
 
 	return useMutation({
 		mutationFn: async (data: LoginFormData) => {
-			await storeLogin(data.email, data.password);
+			const res = await authApi.login(data);
+			return res.data.data;
 		},
 
-		onSuccess: () => {
+		onSuccess: (data) => {
+			localStorage.setItem("accessToken", data.token);
+
+			setAuth(data.user, data.token);
+
 			options?.onSuccess?.();
 		},
 
@@ -67,7 +73,7 @@ export function useLogin(options?: UseLoginOptions) {
 
 interface UseSignupResult {
 	userId: string;
-	devOTP?: string; // Only in development mode
+	devOTP?: string;
 }
 
 interface UseSignupOptions {
@@ -213,43 +219,99 @@ export function useResendOTP(userId: string, options?: UseResendOTPOptions) {
 // ==========================================
 
 interface UseLogoutOptions {
-  onSuccess?: () => void;
-  onError?: (error: string) => void;
+	onSuccess?: () => void;
+	onError?: (error: string) => void;
 }
 
 /**
  * Logout mutation
- * 
+ *
  * Clears token + user from store
  * Invalidates refresh token on backend
- * 
+ *
  * @param options - Success/error callbacks
  * @returns Mutation result
- * 
+ *
  * @example
  * const logout = useLogout({
  *   onSuccess: () => navigate('/login')
  * });
- * 
+ *
  * <button onClick={() => logout.mutate()}>
  *   Logout
  * </button>
  */
 export function useLogout(options?: UseLogoutOptions) {
-  const { logout: storeLogout } = useAuthStore();
+	const { clearAuth } = useAuthStore(); // Get store setter only
 
-  return useMutation({
-    mutationFn: async () => {
-      await storeLogout();
-    },
+	return useMutation({
+		// Step 1: Call API to invalidate refresh token
+		mutationFn: async () => {
+			try {
+				await authApi.logout();
+			} catch (error) {
+				// Even if API fails, we still logout locally
+				console.error("Logout API error:", error);
+			}
+		},
 
-    onSuccess: () => {
-      options?.onSuccess?.();
-    },
+		onSuccess: () => {
+			// Clear localStorage
+			localStorage.removeItem("accessToken");
 
-    onError: (error) => {
-      const message = getErrorMessage(error);
-      options?.onError?.(message);
-    },
-  });
+			// Clear store (pure state update)
+			clearAuth();
+
+			// Callback
+			options?.onSuccess?.();
+		},
+
+		onError: (error) => {
+			const message = getErrorMessage(error);
+			options?.onError?.(message);
+		},
+	});
+}
+
+// ==========================================
+// REFRESH USER HOOK
+// ==========================================
+
+interface UseRefreshUserOptions {
+	onError?: () => void;
+}
+
+/**
+ * Refresh user data from backend
+ *
+ * Use case: After profile updates, refresh user in store
+ *
+ * @example
+ * const refreshUser = useRefreshUser({
+ *   onError: () => logout.mutate()
+ * });
+ *
+ * // After profile update
+ * await updateProfile.mutateAsync(data);
+ * refreshUser.mutate();
+ */
+export function useRefreshUser(options?: UseRefreshUserOptions) {
+	const { setUser, clearAuth } = useAuthStore();
+
+	return useMutation({
+		mutationFn: async () => {
+			const { data } = await getProfile();
+			return data.data;
+		},
+
+		onSuccess: (user) => {
+			setUser(user);
+		},
+
+		onError: () => {
+			// If refresh fails, user session likely invalid
+			clearAuth();
+			options?.onError?.();
+		},
+	});
 }

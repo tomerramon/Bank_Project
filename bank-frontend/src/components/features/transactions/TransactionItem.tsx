@@ -55,7 +55,7 @@ export function TransactionItem({ transaction }: TransactionItemProps) {
 							: "text-red-600 dark:text-red-400",
 					)}
 				>
-					{isIncoming ? "+" : "-"}$
+					{isIncoming ? "+" : "-"}
 					{formatCurrency(transaction.amountInDollars)}
 				</p>
 			</div>
