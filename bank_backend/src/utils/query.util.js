@@ -186,8 +186,8 @@ export async function findTransactionByReference(reference) {
 }
 
 export async function getTransactionStats(userId) {
-    const userObjectId = new mongoose.Types.ObjectId(userId);
-    
+	const userObjectId = new mongoose.Types.ObjectId(userId);
+
 	return await Transactions.aggregate([
 		{ $match: { userId: userObjectId } },
 		{
@@ -209,28 +209,3 @@ export function buildPaginationParams(query) {
 
 	return { page, limit };
 }
-
-export default {
-	// User queries
-	findUserById,
-	findUserByIdWithPassword,
-	findUserByEmail,
-	findUserByEmailWithPassword,
-	findUserByPhone,
-	findActiveUser,
-	checkEmailExists,
-	checkPhoneExists,
-	updateUserBalance,
-	setUserVerified,
-	updateNotificationPreferences,
-
-	// Transaction queries
-	createTransactionPair,
-	findTransactionsByUser,
-	findRecentTransactions,
-	findTransactionByReference,
-	getTransactionStats,
-
-	// Helpers
-	buildPaginationParams,
-};

@@ -122,14 +122,9 @@ export async function changePassword(userId, oldPassword, newPassword) {
 	validatePassword(newPassword);
 
 	// Update password
-	user.passwordHash = await bcrypt.hash(newPassword, 10);
+	user.passwordHash = await bcrypt.hash(newPassword, AUTH.BCRYPT_SALT_ROUNDS);
 	user.refreshTokens = []; // Logout from all devices
 	await user.save();
 
 	return { message: "Password changed successfully. Please log in again." };
 }
-
-export default {
-	AuthenticateUser,
-	changePassword,
-};
