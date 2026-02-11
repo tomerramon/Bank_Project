@@ -320,6 +320,7 @@ userSchema.pre("save", function (next) {
 	if (this.email) {
 		this.email = this.email.toLowerCase();
 	}
+	next();
 });
 
 /**
@@ -333,6 +334,7 @@ userSchema.pre("save", function (next) {
 			.sort((a, b) => b.createdAt - a.createdAt)
 			.slice(0, 5);
 	}
+	next();
 });
 
 // ==========================================
