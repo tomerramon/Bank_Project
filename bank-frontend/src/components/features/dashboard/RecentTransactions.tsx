@@ -26,7 +26,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
 			<div className="divide-y divide-gray-200 dark:divide-gray-800">
 				{transactions.slice(0, 5).map((transaction) => (
 					<TransactionItem
-						key={transaction._id}
+						key={transaction.id}
 						transaction={transaction}
 					/>
 				))}

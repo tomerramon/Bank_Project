@@ -13,7 +13,7 @@ interface TransactionItemProps {
 
 export function TransactionItem({ transaction }: TransactionItemProps) {
 	const isIncoming = transaction.direction === "T_IN";
-	const peerEmail = transaction.peerUserId.email;
+	const peerEmail = transaction.peerUserId?.email||  "unknown user";
 
 	return (
 		<div className="flex items-center justify-between py-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors px-4 -mx-4 rounded-lg">

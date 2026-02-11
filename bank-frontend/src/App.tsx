@@ -15,6 +15,7 @@ import { SignupPage } from "@/pages/SignupPage";
 import { VerifyOTPPage } from "@/pages/VerifyOTPPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { TransactionsPage } from "@/pages/TransactionsPage";
+import { ErrorBoundary } from "./components/common/ErrorBoundary";
 // import { SettingsPage } from "@/pages/SettingsPage";
 
 // Create QueryClient
@@ -34,75 +35,78 @@ const queryClient = new QueryClient({
 
 function App() {
 	return (
-		<QueryClientProvider client={queryClient}>
-			<BrowserRouter>
-				<Routes>
-					{/* Redirect root to dashboard */}
-					<Route
-						path="/"
-						element={<Navigate to="/dashboard" replace />}
-					/>
+		<ErrorBoundary>
+			<QueryClientProvider client={queryClient}>
+				<BrowserRouter>
+					<Routes>
+						{/* Redirect root to dashboard */}
+						<Route
+							path="/"
+							element={<Navigate to="/dashboard" replace />}
+						/>
 
-					{/* Public Routes */}
-					<Route
-						path="/login"
-						element={
-							<PublicRoute>
-								<LoginPage />
-							</PublicRoute>
-						}
-					/>
-					<Route
-						path="/signup"
-						element={
-							<PublicRoute>
-								<SignupPage />
-							</PublicRoute>
-						}
-					/>
-					<Route
-						path="/verify-otp"
-						element={
-							<PublicRoute>
-								<VerifyOTPPage />
-							</PublicRoute>
-						}
-					/>
+						{/* Public Routes */}
+						<Route
+							path="/login"
+							element={
+								<PublicRoute>
+									<LoginPage />
+								</PublicRoute>
+							}
+						/>
+						<Route
+							path="/signup"
+							element={
+								<PublicRoute>
+									<SignupPage />
+								</PublicRoute>
+							}
+						/>
+						<Route
+							path="/verify-otp"
+							element={
+								<PublicRoute>
+									<VerifyOTPPage />
+								</PublicRoute>
+							}
+						/>
 
-					{/* Protected Routes */}
-					<Route
-						path="/dashboard"
-						element={
-							<ProtectedRoute>
-								<DashboardPage />
-							</ProtectedRoute>
-						}
-					/>
-					<Route
-						path="/transactions"
-						element={
-							<ProtectedRoute>
-								<TransactionsPage />
-							</ProtectedRoute>
-						}
-					/>
-					<Route
-						path="/settings"
-						element={
-							<ProtectedRoute>
-								<TransactionsPage />
-							</ProtectedRoute>
-						}
-					/>
+						{/* Protected Routes */}
+						<Route
+							path="/dashboard"
+							element={
+								<ProtectedRoute>
+									<DashboardPage />
+								</ProtectedRoute>
+							}
+						/>
+						<Route
+							path="/transactions"
+							element={
+								<ProtectedRoute>
+									<TransactionsPage />
+								</ProtectedRoute>
+							}
+						/>
+						<Route
+							path="/settings"
+							element={
+								<ProtectedRoute>
+									{/* <SettingsPage /> */}
+									<Navigate to="/dashboard" replace />{" "}
+								</ProtectedRoute>
+							}
+						/>
 
-					{/* 404 Fallback */}
-					<Route
-						path="*"
-						element={<Navigate to="/dashboard" replace />}
-					/>
-				</Routes>
-			</BrowserRouter>
-		</QueryClientProvider>
+						{/* 404 Fallback */}
+						<Route
+							path="*"
+							element={<Navigate to="/dashboard" replace />}
+						/>
+					</Routes>
+				</BrowserRouter>
+			</QueryClientProvider>
+		</ErrorBoundary>
 	);
 }
 

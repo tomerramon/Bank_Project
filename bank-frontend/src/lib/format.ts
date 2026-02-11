@@ -69,7 +69,7 @@ export function formatTransactionAmount(
  */
 export function formatDate(
 	date: string | Date,
-	dateFormat = "d mm yyyy", // alternative format -> dateFormat = "MMM d, yyyy",
+	dateFormat = "dd MM yyyy",
 ): string {
 	try {
 		return format(new Date(date), dateFormat);
@@ -85,8 +85,7 @@ export function formatDate(
  */
 export function formatDateTime(date: string | Date): string {
 	try {
-		return format(new Date(date), "d mm yyyy, h:mm a");
-		// return format(new Date(date), "MMM d, yyyy, h:mm a");
+		return format(new Date(date), "dd MM yyyy, h:mm a");
 	} catch {
 		return "Invalid date";
 	}

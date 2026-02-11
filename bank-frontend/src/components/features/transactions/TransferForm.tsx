@@ -21,7 +21,7 @@ export function TransferForm() {
 		register,
 		handleSubmit,
 		reset,
-		formState: { errors, isSubmitting },
+		formState: { errors },
 	} = useForm<TransferFormData>({
 		resolver: zodResolver(transferFormSchema),
 	});
@@ -87,7 +87,7 @@ export function TransferForm() {
 					type="submit"
 					variant="primary"
 					fullWidth
-					isLoading={isSubmitting}
+					isLoading={transferMutation.isPending}
 				>
 					<Send className="h-4 w-4" />
 					Send Money
