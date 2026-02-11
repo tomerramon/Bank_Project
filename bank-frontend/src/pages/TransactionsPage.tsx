@@ -30,6 +30,11 @@ export function TransactionsPage() {
 		direction: filter === "all" ? undefined : filter,
 	});
 
+	const handleFilterChange = (newFilter: FilterType) => {
+		setFilter(newFilter);
+		setCurrentPage(1);
+	};
+
 	const transactions = transactionsData?.data || [];
 	const pagination = transactionsData?.pagination;
 
@@ -56,7 +61,7 @@ export function TransactionsPage() {
 												? "primary"
 												: "secondary"
 										}
-										onClick={() => setFilter("all")}
+										onClick={() => handleFilterChange("all")}
 									>
 										All
 									</Button>
@@ -67,7 +72,7 @@ export function TransactionsPage() {
 												? "primary"
 												: "secondary"
 										}
-										onClick={() => setFilter("T_IN")}
+										onClick={() => handleFilterChange("T_IN")}
 									>
 										Received
 									</Button>
@@ -78,7 +83,7 @@ export function TransactionsPage() {
 												? "primary"
 												: "secondary"
 										}
-										onClick={() => setFilter("T_OUT")}
+										onClick={() => handleFilterChange("T_OUT")}
 									>
 										Sent
 									</Button>

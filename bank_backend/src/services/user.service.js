@@ -130,9 +130,6 @@ export async function verifyUser(userId) {
 
 	console.log(`✅ User verified: ${user.email}`);
 
-	const userName = user.profile?.firstName || "there";
-	sendAccountVerifiedNotification(user, userName);
-
 	return user;
 }
 
