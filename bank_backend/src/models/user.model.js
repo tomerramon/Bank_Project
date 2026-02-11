@@ -97,7 +97,7 @@ const userSchema = new mongoose.Schema(
 			},
 			sms: {
 				type: Boolean,
-				default: false, // SMS notifications enabled by default
+				default: false,
 				required: true,
 			},
 		},

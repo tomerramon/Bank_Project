@@ -274,8 +274,6 @@ export async function logoutController(req, res) {
 		// Even if invalidation fails, clear cookie and return success
 		res.clearCookie("refreshToken");
 		res.status(200).json(formatSuccessResponse("Logged out successfully"));
-	} finally {
-		console.log("Im in log out finally statment");
 	}
 }
 
@@ -384,7 +382,10 @@ export async function resetPasswordController(req, res) {
 		}
 
 		const fullUser = await findUserByIdWithPassword(user._id);
-		fullUser.passwordHash = await bcrypt.hash(newPassword, 10);
+		fullUser.passwordHash = await bcrypt.hash(
+			newPassword,
+			AUTH.BCRYPT_SALT_ROUNDS,
+		);
 		fullUser.refreshTokens = [];
 		await fullUser.save();
 

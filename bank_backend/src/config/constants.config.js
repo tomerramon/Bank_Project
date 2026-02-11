@@ -1,6 +1,6 @@
 /**
  * Application Constants
- * 
+ *
  * Centralized configuration values used across the application.
  */
 
@@ -9,17 +9,17 @@
 // ==========================================
 
 export const CURRENCY = {
-    // Balance limits
-    MIN_BALANCE: 0,                    // $0.00
-    INITIAL_BALANCE_MIN: 1000,         // $10.00 in cents
-    INITIAL_BALANCE_MAX: 10000,        // $100.00 in cents
+	// Balance limits
+	MIN_BALANCE: 0, // $0.00
+	INITIAL_BALANCE_MIN: 1000, // $10.00 in cents
+	INITIAL_BALANCE_MAX: 10000, // $100.00 in cents
 
-    // Transaction limits
-    MIN_TRANSFER_AMOUNT: 0.01,         // $0.01
-    MAX_TRANSFER_AMOUNT: 10000,        // $10,000.00
+	// Transaction limits
+	MIN_TRANSFER_AMOUNT: 0.01, // $0.01
+	MAX_TRANSFER_AMOUNT: 10000, // $10,000.00
 
-    // Decimal places
-    DECIMAL_PLACES: 2
+	// Decimal places
+	DECIMAL_PLACES: 2,
 };
 
 // ==========================================
@@ -27,23 +27,25 @@ export const CURRENCY = {
 // ==========================================
 
 export const AUTH = {
-    // JWT expiration
-    ACCESS_TOKEN_EXPIRY: '15m',        // 15 minutes
-    REFRESH_TOKEN_EXPIRY: '7d',        // 7 days
+	// JWT expiration
+	ACCESS_TOKEN_EXPIRY: "15m", // 15 minutes
+	REFRESH_TOKEN_EXPIRY: "7d", // 7 days
 
-    // Password requirements
-    PASSWORD_MIN_LENGTH: 8,
-    PASSWORD_REGEX: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
-    PASSWORD_REGEX_LOWER: /(?=.*[a-z])/,
-    PASSWORD_REGEX_UPPER: /(?=.*[A-Z])/,
-    PASSWORD_REGEX_NUMBER: /(?=.*\d)/,
-    PASSWORD_REGEX_SPECIAL: /(?=.*[@$!%*?&])/,
+	// Password requirements
+	PASSWORD_MIN_LENGTH: 8,
+	PASSWORD_REGEX: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
+	PASSWORD_REGEX_LOWER: /(?=.*[a-z])/,
+	PASSWORD_REGEX_UPPER: /(?=.*[A-Z])/,
+	PASSWORD_REGEX_NUMBER: /(?=.*\d)/,
+	PASSWORD_REGEX_SPECIAL: /(?=.*[@$!%*?&])/,
 
-    // Account security
-    MAX_LOGIN_ATTEMPTS: 5,
-    ACCOUNT_LOCK_DURATION: 30 * 60 * 1000,  // 30 minutes in ms
-    MAX_REFRESH_TOKENS: 5,                  // Max devices logged in
-    REFRESH_TOKEN_CLEANUP_DAYS: 7
+	// Account security
+	MAX_LOGIN_ATTEMPTS: 5,
+	ACCOUNT_LOCK_DURATION: 30 * 60 * 1000, // 30 minutes in ms
+	MAX_REFRESH_TOKENS: 5, // Max devices logged in
+	REFRESH_TOKEN_CLEANUP_DAYS: 7,
+
+	BCRYPT_SALT_ROUNDS: 12,
 };
 
 // ==========================================
@@ -51,25 +53,25 @@ export const AUTH = {
 // ==========================================
 
 export const VERIFICATION = {
-    // OTP settings
-    OTP_LENGTH: 6,
-    OTP_EXPIRY_MINUTES: 10,
-    MAX_OTP_ATTEMPTS: 5,
+	// OTP settings
+	OTP_LENGTH: 6,
+	OTP_EXPIRY_MINUTES: 10,
+	MAX_OTP_ATTEMPTS: 5,
 
-    // Rate limiting
-    OTP_REQUEST_LIMIT_10MIN: 3,       // Max 3 OTP requests per 10 min
-    OTP_REQUEST_LIMIT_1HOUR: 10,      // Max 10 OTP requests per hour
+	// Rate limiting
+	OTP_REQUEST_LIMIT_10MIN: 3, // Max 3 OTP requests per 10 min
+	OTP_REQUEST_LIMIT_1HOUR: 10, // Max 10 OTP requests per hour
 
-    // Cleanup
-    CLEANUP_OLD_OTP_DAYS: 3,          // Delete used OTPs after 3 days
+	// Cleanup
+	CLEANUP_OLD_OTP_DAYS: 3, // Delete used OTPs after 3 days
 
-    // Types
-    TYPES: {
-        EMAIL_VERIFICATION: 'EMAIL_VERIFICATION',
-        SMS_VERIFICATION: 'SMS_VERIFICATION',
-        PASSWORD_RESET: 'PASSWORD_RESET',
-        TWO_FACTOR: 'TWO_FACTOR'
-    }
+	// Types
+	TYPES: {
+		EMAIL_VERIFICATION: "EMAIL_VERIFICATION",
+		SMS_VERIFICATION: "SMS_VERIFICATION",
+		PASSWORD_RESET: "PASSWORD_RESET",
+		TWO_FACTOR: "TWO_FACTOR",
+	},
 };
 
 // ==========================================
@@ -77,9 +79,9 @@ export const VERIFICATION = {
 // ==========================================
 
 export const ACCOUNT_STATUS = {
-    ACTIVE: 'active',
-    SUSPENDED: 'suspended',
-    CLOSED: 'closed'
+	ACTIVE: "active",
+	SUSPENDED: "suspended",
+	CLOSED: "closed",
 };
 
 // ==========================================
@@ -87,14 +89,14 @@ export const ACCOUNT_STATUS = {
 // ==========================================
 
 export const TRANSACTION = {
-    DIRECTION: {
-        IN: 'T_IN',
-        OUT: 'T_OUT'
-    },
+	DIRECTION: {
+		IN: "T_IN",
+		OUT: "T_OUT",
+	},
 
-    // Pagination
-    DEFAULT_PAGE_SIZE: 20,
-    MAX_PAGE_SIZE: 100
+	// Pagination
+	DEFAULT_PAGE_SIZE: 20,
+	MAX_PAGE_SIZE: 100,
 };
 
 // ==========================================
@@ -102,18 +104,18 @@ export const TRANSACTION = {
 // ==========================================
 
 export const VALIDATION = {
-    // Email
-    EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    EMAIL_MAX_LENGTH: 255,
+	// Email
+	EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+	EMAIL_MAX_LENGTH: 255,
 
-    // Phone
-    PHONE_REGEX: /^\+?[0-9]{9,15}$/,
-    PHONE_MIN_LENGTH: 9,
-    PHONE_MAX_LENGTH: 15,
+	// Phone
+	PHONE_REGEX: /^\+?[0-9]{9,15}$/,
+	PHONE_MIN_LENGTH: 9,
+	PHONE_MAX_LENGTH: 15,
 
-    // User fields
-    NAME_MIN_LENGTH: 2,
-    NAME_MAX_LENGTH: 50
+	// User fields
+	NAME_MIN_LENGTH: 2,
+	NAME_MAX_LENGTH: 50,
 };
 
 // ==========================================
@@ -121,18 +123,18 @@ export const VALIDATION = {
 // ==========================================
 
 export const HTTP_STATUS = {
-    OK: 200,
-    CREATED: 201,
-    NO_CONTENT: 204,
+	OK: 200,
+	CREATED: 201,
+	NO_CONTENT: 204,
 
-    BAD_REQUEST: 400,
-    UNAUTHORIZED: 401,
-    FORBIDDEN: 403,
-    NOT_FOUND: 404,
-    CONFLICT: 409,
+	BAD_REQUEST: 400,
+	UNAUTHORIZED: 401,
+	FORBIDDEN: 403,
+	NOT_FOUND: 404,
+	CONFLICT: 409,
 
-    INTERNAL_SERVER_ERROR: 500,
-    SERVICE_UNAVAILABLE: 503
+	INTERNAL_SERVER_ERROR: 500,
+	SERVICE_UNAVAILABLE: 503,
 };
 
 // ==========================================
@@ -140,30 +142,30 @@ export const HTTP_STATUS = {
 // ==========================================
 
 export const ERROR_MESSAGES = {
-    // User
-    USER_NOT_FOUND: 'User not found',
-    USER_ALREADY_EXISTS: 'User with this email already exists',
-    PHONE_ALREADY_EXISTS: 'User with this phone number already exists',
+	// User
+	USER_NOT_FOUND: "User not found",
+	USER_ALREADY_EXISTS: "User with this email already exists",
+	PHONE_ALREADY_EXISTS: "User with this phone number already exists",
 
-    // Authentication
-    INVALID_CREDENTIALS: 'Invalid email or password',
-    ACCOUNT_NOT_VERIFIED: 'Please verify your email address before logging in',
-    ACCOUNT_LOCKED: 'Account is locked due to too many failed login attempts',
-    ACCOUNT_NOT_ACTIVE: 'Your account is not active',
+	// Authentication
+	INVALID_CREDENTIALS: "Invalid email or password",
+	ACCOUNT_NOT_VERIFIED: "Please verify your email address before logging in",
+	ACCOUNT_LOCKED: "Account is locked due to too many failed login attempts",
+	ACCOUNT_NOT_ACTIVE: "Your account is not active",
 
-    // Transactions
-    INSUFFICIENT_FUNDS: 'Insufficient funds',
-    RECEIVER_NOT_FOUND: 'Receiver not found',
-    SELF_TRANSFER: 'Cannot transfer money to the same account',
-    INVALID_AMOUNT: 'Invalid transfer amount',
+	// Transactions
+	INSUFFICIENT_FUNDS: "Insufficient funds",
+	RECEIVER_NOT_FOUND: "Receiver not found",
+	SELF_TRANSFER: "Cannot transfer money to the same account",
+	INVALID_AMOUNT: "Invalid transfer amount",
 
-    // Validation
-    VALIDATION_FAILED: 'Validation failed',
-    REQUIRED_FIELD_MISSING: 'Required field missing',
+	// Validation
+	VALIDATION_FAILED: "Validation failed",
+	REQUIRED_FIELD_MISSING: "Required field missing",
 
-    // General
-    INTERNAL_ERROR: 'Internal server error',
-    UNAUTHORIZED_ACCESS: 'Unauthorized access'
+	// General
+	INTERNAL_ERROR: "Internal server error",
+	UNAUTHORIZED_ACCESS: "Unauthorized access",
 };
 
 // ==========================================
@@ -171,12 +173,12 @@ export const ERROR_MESSAGES = {
 // ==========================================
 
 export const SUCCESS_MESSAGES = {
-    USER_CREATED: 'User created successfully',
-    LOGIN_SUCCESS: 'Login successful',
-    LOGOUT_SUCCESS: 'Logged out successfully',
-    TRANSFER_SUCCESS: 'Money transferred successfully',
-    OTP_SENT: 'Verification code sent',
-    ACCOUNT_VERIFIED: 'Account verified successfully'
+	USER_CREATED: "User created successfully",
+	LOGIN_SUCCESS: "Login successful",
+	LOGOUT_SUCCESS: "Logged out successfully",
+	TRANSFER_SUCCESS: "Money transferred successfully",
+	OTP_SENT: "Verification code sent",
+	ACCOUNT_VERIFIED: "Account verified successfully",
 };
 
 // ==========================================
@@ -184,10 +186,10 @@ export const SUCCESS_MESSAGES = {
 // ==========================================
 
 export const DATABASE = {
-    CONNECTION_POOL_SIZE_MAX: 10,
-    CONNECTION_POOL_SIZE_MIN: 2,
-    SOCKET_TIMEOUT_MS: 45000,
-    SERVER_SELECTION_TIMEOUT_MS: 5000
+	CONNECTION_POOL_SIZE_MAX: 10,
+	CONNECTION_POOL_SIZE_MIN: 2,
+	SOCKET_TIMEOUT_MS: 45000,
+	SERVER_SELECTION_TIMEOUT_MS: 5000,
 };
 
 // ==========================================
@@ -195,17 +197,17 @@ export const DATABASE = {
 // ==========================================
 
 export const RATE_LIMIT = {
-    // General API
-    GENERAL_WINDOW_MS: 15 * 60 * 1000,     // 15 minutes
-    GENERAL_MAX_REQUESTS: 100,
+	// General API
+	GENERAL_WINDOW_MS: 15 * 60 * 1000, // 15 minutes
+	GENERAL_MAX_REQUESTS: 100,
 
-    // Authentication endpoints
-    AUTH_WINDOW_MS: 15 * 60 * 1000,        // 15 minutes
-    AUTH_MAX_REQUESTS: 5,
+	// Authentication endpoints
+	AUTH_WINDOW_MS: 15 * 60 * 1000, // 15 minutes
+	AUTH_MAX_REQUESTS: 5,
 
-    // Transaction endpoints
-    TRANSACTION_WINDOW_MS: 60 * 1000,       // 1 minute
-    TRANSACTION_MAX_REQUESTS: 10
+	// Transaction endpoints
+	TRANSACTION_WINDOW_MS: 60 * 1000, // 1 minute
+	TRANSACTION_MAX_REQUESTS: 10,
 };
 
 // ==========================================
@@ -213,9 +215,9 @@ export const RATE_LIMIT = {
 // ==========================================
 
 export const PAGINATION = {
-    DEFAULT_PAGE: 1,
-    DEFAULT_LIMIT: 20,
-    MAX_LIMIT: 100
+	DEFAULT_PAGE: 1,
+	DEFAULT_LIMIT: 20,
+	MAX_LIMIT: 100,
 };
 
 // ==========================================
@@ -223,9 +225,9 @@ export const PAGINATION = {
 // ==========================================
 
 export const ENVIRONMENT = {
-    DEVELOPMENT: 'development',
-    PRODUCTION: 'production',
-    TEST: 'test'
+	DEVELOPMENT: "development",
+	PRODUCTION: "production",
+	TEST: "test",
 };
 
 // ==========================================
@@ -237,9 +239,11 @@ export const ENVIRONMENT = {
  * @returns {number} - Balance in cents
  */
 export function generateInitialBalance() {
-    const { INITIAL_BALANCE_MIN, INITIAL_BALANCE_MAX } = CURRENCY;
-    return Math.floor(Math.random() * (INITIAL_BALANCE_MAX - INITIAL_BALANCE_MIN)
-        + INITIAL_BALANCE_MIN);
+	const { INITIAL_BALANCE_MIN, INITIAL_BALANCE_MAX } = CURRENCY;
+	return Math.floor(
+		Math.random() * (INITIAL_BALANCE_MAX - INITIAL_BALANCE_MIN) +
+			INITIAL_BALANCE_MIN,
+	);
 }
 
 /**
@@ -247,7 +251,7 @@ export function generateInitialBalance() {
  * @returns {boolean}
  */
 export function isProduction() {
-    return process.env.NODE_ENV === ENVIRONMENT.PRODUCTION;
+	return process.env.NODE_ENV === ENVIRONMENT.PRODUCTION;
 }
 
 /**
@@ -255,7 +259,7 @@ export function isProduction() {
  * @returns {boolean}
  */
 export function isDevelopment() {
-    return process.env.NODE_ENV === ENVIRONMENT.DEVELOPMENT;
+	return process.env.NODE_ENV === ENVIRONMENT.DEVELOPMENT;
 }
 
 /**
@@ -263,5 +267,5 @@ export function isDevelopment() {
  * @returns {boolean}
  */
 export function isTest() {
-    return process.env.NODE_ENV === ENVIRONMENT.TEST;
+	return process.env.NODE_ENV === ENVIRONMENT.TEST;
 }

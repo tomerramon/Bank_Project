@@ -137,11 +137,11 @@ export const resetPasswordFormSchema = z
 		newPassword: passwordSchema,
 		confirmPassword: z.string().min(1, "Please confirm your password"),
 	})
+	.strict()
 	.refine((data) => data.newPassword === data.confirmPassword, {
 		message: "Passwords don't match",
 		path: ["confirmPassword"],
-	})
-	.strict();
+	});
 
 /**
  * Change password schema
@@ -152,6 +152,7 @@ export const changePasswordFormSchema = z
 		newPassword: passwordSchema,
 		confirmPassword: z.string().min(1, "Please confirm your password"),
 	})
+	.strict()
 	.refine((data) => data.newPassword === data.confirmPassword, {
 		message: "Passwords don't match",
 		path: ["confirmPassword"],
@@ -159,8 +160,7 @@ export const changePasswordFormSchema = z
 	.refine((data) => data.oldPassword !== data.newPassword, {
 		message: "New password must be different from current password",
 		path: ["newPassword"],
-	})
-	.strict();
+	});
 
 // ==========================================
 // TYPE EXPORTS
