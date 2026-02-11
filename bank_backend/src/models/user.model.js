@@ -315,7 +315,7 @@ userSchema.statics.findByPhone = function (phone) {
 /**
  * Pre-save hook: Ensure email is lowercase
  */
-userSchema.pre("save", function (next) {
+userSchema.pre("save", function () {
 	if (this.email) {
 		this.email = this.email.toLowerCase();
 	}
@@ -325,7 +325,7 @@ userSchema.pre("save", function (next) {
  * Pre-save hook: Limit refresh tokens to 5 per user
  * This prevents memory issues and forces re-login on old devices
  */
-userSchema.pre("save", function (next) {
+userSchema.pre("save", function () {
 	if (this.refreshTokens && this.refreshTokens.length > 5) {
 		// Keep only the 5 most recent tokens
 		this.refreshTokens = this.refreshTokens
