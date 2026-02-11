@@ -14,6 +14,7 @@ export const useAuthStore = create<AuthStore>()(
 			user: null,
 			token: null,
 			isAuthenticated: false,
+			isHydrated: false,
 
 			/**
 			 * Set authenticated user
@@ -38,6 +39,10 @@ export const useAuthStore = create<AuthStore>()(
 			setUser: (user: User) => {
 				set({ user });
 			},
+			
+			setHydrated: (val: boolean) => {
+				set({ isHydrated: val });
+			},
 		}),
 		{
 			name: "auth-storage",
@@ -46,6 +51,11 @@ export const useAuthStore = create<AuthStore>()(
 				token: state.token,
 				isAuthenticated: state.isAuthenticated,
 			}),
+			onRehydrateStorage: () => {
+				return (state) => {
+					state?.setHydrated(true);
+				};
+			},
 		},
 	),
 );

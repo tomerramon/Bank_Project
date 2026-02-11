@@ -13,10 +13,10 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-	const { isAuthenticated, isLoading } = useAuthStore();
+	const { isAuthenticated, isHydrated } = useAuthStore();
 
 	// Show loading spinner while checking auth
-	if (isLoading) {
+	if (!isHydrated) {
 		return <FullPageSpinner />;
 	}
 

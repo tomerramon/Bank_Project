@@ -139,11 +139,13 @@ export interface AuthStore {
 	user: User | null;
 	token: string | null;
 	isAuthenticated: boolean;
+	isHydrated: boolean;
 
 	// Actions (Pure state setters only - NO API calls)
 	setAuth: (user: User, token: string) => void;
 	clearAuth: () => void;
 	setUser: (user: User) => void;
+	setHydrated: (value: boolean) => void; // ← ADD THIS
 }
 
 /**
