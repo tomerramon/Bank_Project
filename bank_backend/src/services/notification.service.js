@@ -63,7 +63,7 @@ function wantsSMS(user) {
         return user.wantsSMSNotifications();
     }
     // Otherwise check the field directly
-    return user.notificationPreferences?.sms !== false; // Default true
+    return user.notificationPreferences?.sms === true;
 }
 
 // ============================================
