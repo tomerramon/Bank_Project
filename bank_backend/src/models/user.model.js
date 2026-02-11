@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { generateInitialBalance } from "../config/constants.config.js";
 
 /**
  * User Schema for Banking Application
@@ -38,9 +39,7 @@ const userSchema = new mongoose.Schema(
 		balance: {
 			type: Number,
 			required: true,
-			default: function () {
-				return Math.floor(Math.random() * 9000) + 1000;
-			},
+			default: generateInitialBalance,
 			min: [0, "Balance cannot be negative"],
 		},
 		phone: {
@@ -320,7 +319,6 @@ userSchema.pre("save", function (next) {
 	if (this.email) {
 		this.email = this.email.toLowerCase();
 	}
-	next();
 });
 
 /**
@@ -333,20 +331,6 @@ userSchema.pre("save", function (next) {
 		this.refreshTokens = this.refreshTokens
 			.sort((a, b) => b.createdAt - a.createdAt)
 			.slice(0, 5);
-	}
-	next();
-});
-
-// ==========================================
-// POST-SAVE HOOKS
-// ==========================================
-
-/**
- * Post-save hook: Log account creation
- */
-userSchema.post("save", function (doc) {
-	if (doc.isNew) {
-		console.log(`✅ New user registered: ${doc.email}`);
 	}
 });
 

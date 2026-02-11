@@ -22,6 +22,7 @@ import {
 import { validateAmount, requireDifferentUsers, requireVerified, requireActive } from '../utils/validations.util.js';
 import {
     InsufficientFundsError,
+    NotFoundError,
     UserNotFoundError
 } from '../utils/errors.util.js';
 import {
@@ -235,13 +236,13 @@ export async function getRecentTransactions(userId, limit = 10) {
  * 
  * @param {string} reference - Unique transaction reference
  * @returns {Promise<Array>} - Both transaction records
- * @throws {UserNotFoundError}
+ * @throws {NotFoundError}
  */
 export async function getTransactionByReference(reference) {
     const transactions = await findTransactionByReference(reference);
 
     if (!transactions || transactions.length === 0) {
-        throw new UserNotFoundError('Transaction not found');
+        throw new NotFoundError('Transaction');
     }
 
     return transactions.map(t => ({

@@ -18,6 +18,7 @@ import {
 	UserNotFoundError,
 	AuthenticationError,
 } from "../utils/errors.util.js";
+import { AUTH } from "../config/constants.config.js";
 
 /**
  * Authenticate user with email and password
@@ -59,7 +60,7 @@ export async function AuthenticateUser(email, password) {
 		await user.incrementLoginAttempts();
 
 		// Check if account should now be locked (after increment)
-		if (user.failedLoginAttempts >= 4) {
+		if (user.failedLoginAttempts > AUTH.MAX_LOGIN_ATTEMPTS) {
 			throw new Error(
 				"Too many failed login attempts. " +
 					"Your account has been locked for 30 minutes.",
