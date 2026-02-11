@@ -24,7 +24,7 @@ export function Header() {
 		},
 	});
 
-	const onSubmit = async () => {
+	const handleLogout = async () => {
 		logoutMutation.mutate();
 	};
 
@@ -105,7 +105,7 @@ export function Header() {
 						<Button
 							variant="ghost"
 							size="sm"
-							onClick={onSubmit}
+							onClick={handleLogout}
 							title="Logout"
 						>
 							<LogOut className="h-4 w-4" />
