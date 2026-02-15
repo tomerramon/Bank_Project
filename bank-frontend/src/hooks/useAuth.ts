@@ -53,8 +53,6 @@ export function useLogin(options?: UseLoginOptions) {
 		},
 
 		onSuccess: (data) => {
-			localStorage.setItem("accessToken", data.token);
-
 			setAuth(data.user, data.token);
 
 			options?.onSuccess?.();
@@ -247,21 +245,14 @@ export function useLogout(options?: UseLogoutOptions) {
 	return useMutation({
 		// Step 1: Call API to invalidate refresh token
 		mutationFn: async () => {
-			try {
-				await authApi.logout();
-			} catch (error) {
-				// Even if API fails, we still logout locally
-				console.error("Logout API error:", error);
-			}
+			await authApi.logout();
+		},
+
+		onSettled: () => {
+			clearAuth();
 		},
 
 		onSuccess: () => {
-			// Clear localStorage
-			localStorage.removeItem("accessToken");
-
-			// Clear store (pure state update)
-			clearAuth();
-
 			// Callback
 			options?.onSuccess?.();
 		},

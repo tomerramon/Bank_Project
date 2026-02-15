@@ -137,7 +137,6 @@ export interface TransactionStats {
 export interface AuthStore {
 	// State
 	user: User | null;
-	token: string | null;
 	isAuthenticated: boolean;
 	isHydrated: boolean;
 

@@ -12,7 +12,6 @@ export const useAuthStore = create<AuthStore>()(
 	persist(
 		(set) => ({
 			user: null,
-			token: null,
 			isAuthenticated: false,
 			isHydrated: false,
 
@@ -21,7 +20,8 @@ export const useAuthStore = create<AuthStore>()(
 			 * Called by login hook after successful API response
 			 */
 			setAuth: (user: User, token: string) => {
-				set({ user, token, isAuthenticated: true });
+				localStorage.setItem("accessToken", token);
+				set({ user, isAuthenticated: true });
 			},
 
 			/**
@@ -29,7 +29,8 @@ export const useAuthStore = create<AuthStore>()(
 			 * Called by logout hook
 			 */
 			clearAuth: () => {
-				set({ user: null, token: null, isAuthenticated: false });
+				localStorage.removeItem("accessToken");
+				set({ user: null, isAuthenticated: false });
 			},
 
 			/**
@@ -39,7 +40,7 @@ export const useAuthStore = create<AuthStore>()(
 			setUser: (user: User) => {
 				set({ user });
 			},
-			
+
 			setHydrated: (val: boolean) => {
 				set({ isHydrated: val });
 			},
@@ -48,7 +49,6 @@ export const useAuthStore = create<AuthStore>()(
 			name: "auth-storage",
 			partialize: (state) => ({
 				user: state.user,
-				token: state.token,
 				isAuthenticated: state.isAuthenticated,
 			}),
 			onRehydrateStorage: () => {
