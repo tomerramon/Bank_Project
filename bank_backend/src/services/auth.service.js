@@ -86,7 +86,7 @@ export async function AuthenticateUser(email, password) {
 		user: {
 			id: user._id,
 			email: user.email,
-			/* balance: user.balance, */
+			balance: user.balance,
 			isVerified: user.isVerified,
 			accountStatus: user.accountStatus,
 		},
