@@ -52,7 +52,7 @@ import { checkLowBalance } from "./user.service.js";
  * @returns {Promise<Object>} - Transaction result with details
  * @throws {InvalidAmountError|InsufficientFundsError|UserNotFoundError|SelfTransferError}
  */
-export const transferMoney = async (fromUserId, toEmail, amount) => {
+export async function transferMoney(fromUserId, toEmail, amount) {
 	validateAmount(amount);
 	const amountInCents = dollarsToCents(amount);
 
@@ -188,7 +188,7 @@ export const transferMoney = async (fromUserId, toEmail, amount) => {
 	} finally {
 		session.endSession();
 	}
-};
+}
 
 // ============================================
 // TRANSACTION QUERIES
