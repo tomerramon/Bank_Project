@@ -35,7 +35,7 @@ class RateLimiter {
 		this.requests = new Map();
 
 		// Cleanup old entries every minute
-		setInterval(() => this.cleanup(), 60000);
+		this._cleanupInterval = setInterval(() => this.cleanup(), 60000);
 	}
 
 	/**
@@ -75,6 +75,16 @@ class RateLimiter {
 			} else {
 				this.requests.set(ip, validRequests);
 			}
+		}
+	}
+
+	/**
+	 * Stop the cleanup interval
+	 * Call this when shutting down or in test teardown
+	 */
+	destroy() {
+		if (this._cleanupInterval) {
+			clearInterval(this._cleanupInterval);
 		}
 	}
 }
@@ -154,8 +164,8 @@ export function transactionRateLimit(req, res, next) {
 	next();
 }
 
-export default {
-	generalRateLimit,
-	authRateLimit,
-	transactionRateLimit,
-};
+export function destroyLimiters() {
+	generalLimiter.destroy();
+	authLimiter.destroy();
+	transactionLimiter.destroy();
+}
