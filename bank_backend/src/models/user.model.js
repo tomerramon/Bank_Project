@@ -266,7 +266,7 @@ userSchema.methods.wantsEmailNotifications = function () {
  * @returns {boolean} - true if SMS notifications are enabled
  */
 userSchema.methods.wantsSMSNotifications = function () {
-	return this.notificationPreferences?.sms !== false; // Default true
+	return this.notificationPreferences?.sms === true; // Default false
 };
 
 // ==========================================
