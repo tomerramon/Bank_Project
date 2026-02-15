@@ -1,14 +1,17 @@
 import express, { json } from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-
-const app = express();
+import helmet from "helmet";
 
 import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/user.route.js";
 import transactionRoutes from "./routes/transaction.route.js";
 import { generalRateLimit } from "./middlewares/rateLimit.middleware.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
+
+const app = express();
+
+app.use(helmet());
 
 // CORS for frontend
 app.use(

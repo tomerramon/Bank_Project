@@ -1,4 +1,4 @@
-import { errorToResponse, getStatusCode } from "../utils/errors.util";
+import { errorToResponse, getStatusCode } from "../utils/errors.util.js";
 
 export function errorHandler(err, req, res, next) {
 	console.error("Unhandled error:", err);
