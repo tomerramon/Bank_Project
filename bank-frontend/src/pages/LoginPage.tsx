@@ -29,9 +29,6 @@ export function LoginPage() {
 	});
 
 	const loginMutation = useLogin({
-		onSuccess: () => {
-			navigate("/dashboard");
-		},
 		onError: (err) => {
 			setError(err);
 			setTimeout(() => setError(null), 5000);
@@ -40,7 +37,11 @@ export function LoginPage() {
 
 	const onSubmit = async (data: LoginFormData) => {
 		setError(null);
-		loginMutation.mutate(data);
+		loginMutation.mutate(data, {
+			onSuccess: () => {
+				navigate("/dashboard");
+			},
+		});
 	};
 
 	return (
