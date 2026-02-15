@@ -32,13 +32,6 @@ export function SignupPage() {
 		onError: (err) => {
 			setError(err);
 		},
-		// onSuccess: (responseData) => {
-		// 	navigate("/verify-otp", {
-		// 		state: {
-		// 			userId: responseData.userId,
-		// 		},
-		// 	});
-		// },
 	});
 
 	const onSubmit = async (data: SignupFormData) => {
