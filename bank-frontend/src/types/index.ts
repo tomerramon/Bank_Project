@@ -145,7 +145,7 @@ export interface AuthStore {
 	setAuth: (user: User, token: string) => void;
 	clearAuth: () => void;
 	setUser: (user: User) => void;
-	setHydrated: (value: boolean) => void; // ← ADD THIS
+	setHydrated: (value: boolean) => void;
 }
 
 /**
