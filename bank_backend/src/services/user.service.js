@@ -30,6 +30,7 @@ import {
 } from "../utils/query.util.js";
 import { getRecentTransactions } from "./transaction.service.js";
 import { validateNotificationPreferences } from "../utils/validations.util.js";
+import { AUTH } from "../config/constants.config.js";
 
 // ============================================
 // HELPER FUNCTIONS

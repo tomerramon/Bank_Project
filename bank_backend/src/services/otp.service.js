@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import Verifications from "../models/verification.model.js";
-import { VERIFICATION } from "../config/constants.config.js";
+import { AUTH, VERIFICATION } from "../config/constants.config.js";
 import { OTPLimitError } from "../utils/errors.util.js";
 
 /**

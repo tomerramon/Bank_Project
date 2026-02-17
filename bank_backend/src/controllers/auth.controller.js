@@ -43,6 +43,7 @@ import {
 	formatSuccessResponse,
 } from "../utils/response.util.js";
 import { ValidationError, UserNotFoundError } from "../utils/errors.util.js";
+import { AUTH } from "../config/constants.config.js";
 
 // ============================================
 //  SIGNUP CONTROLLER
