@@ -152,7 +152,7 @@ export async function findTransactionsByUser(userId, options = {}) {
 			.sort({ createdAt: -1 })
 			.skip(skip)
 			.limit(limit)
-			.populate("peerUserId", "email")
+			.populate("peerUserId", "email profile.firstName profile.lastName")
 			.lean(),
 		Transactions.countDocuments(query),
 	]);
@@ -174,14 +174,14 @@ export async function findRecentTransactions(userId, limit = 10) {
 	return await Transactions.find({ userId })
 		.sort({ createdAt: -1 })
 		.limit(limit)
-		.populate("peerUserId", "email")
+		.populate("peerUserId", "email profile.firstName profile.lastName")
 		.lean();
 }
 
 export async function findTransactionByReference(reference) {
 	return await Transactions.find({ reference })
 		.populate("userId", "email")
-		.populate("peerUserId", "email")
+		.populate("peerUserId", "email profile.firstName profile.lastName")
 		.lean();
 }
 
