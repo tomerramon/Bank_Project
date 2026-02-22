@@ -1,11 +1,11 @@
 /**
  * Email Templates Configuration
- * 
+ *
  * All email content (subjects, text, HTML) is stored here for easy reuse and modification.
  * This makes it easy to update email content without touching the service code.
  */
 
-import { VERIFICATION } from './constants.config.js';
+import { VERIFICATION } from "./constants.config.js";
 
 /**
  * Common email styles (reused across templates)
@@ -43,12 +43,13 @@ const COMMON_STYLES = `
  * OTP Verification Email Template
  */
 export const OTP_EMAIL = {
-    // Email subject
-    subject: 'Your Verification Code',
-    
-    // Plain text version (for email clients that don't support HTML)
-    getText: (data) => `
-Hello ${data.userName || 'there'},
+	// Email subject
+	subject: "Your Verification Code",
+
+	// Plain text version (for email clients that don't support HTML)
+	getText: (data) =>
+		`
+Hello ${data.userName || "there"},
 
 Your verification code is: ${data.otp}
 
@@ -57,11 +58,12 @@ This code will expire in ${data.expiryMinutes || 10} minutes.
 If you didn't request this code, please ignore this email.
 
 Best regards,
-${data.appName || 'Bank App'} Team
+${data.appName || "Bank App"} Team
     `.trim(),
-    
-    // HTML version (for modern email clients)
-    getHTML: (data) => `
+
+	// HTML version (for modern email clients)
+	getHTML: (data) =>
+		`
 <!DOCTYPE html>
 <html>
 <head>
@@ -94,7 +96,7 @@ ${data.appName || 'Bank App'} Team
         <h1>Email Verification</h1>
     </div>
     <div class="content">
-        <p>Hello ${data.userName || 'there'},</p>
+        <p>Hello ${data.userName || "there"},</p>
         <p>Thank you for signing up! Please use the following verification code to complete your registration:</p>
         
         <div class="otp-box">
@@ -112,23 +114,24 @@ ${data.appName || 'Bank App'} Team
     </div>
     <div class="footer">
         <p>This is an automated message, please do not reply.</p>
-        <p>© 2024 ${data.appName || 'Bank App'}. All rights reserved.</p>
+        <p>© 2024 ${data.appName || "Bank App"}. All rights reserved.</p>
     </div>
 </body>
 </html>
-    `.trim()
+    `.trim(),
 };
 
 /**
  * Welcome Email Template
  */
 export const WELCOME_EMAIL = {
-    subject: (data) => `Welcome to ${data.appName || 'Bank App'}! 🎉`,
-    
-    getText: (data) => `
+	subject: (data) => `Welcome to ${data.appName || "Bank App"}! 🎉`,
+
+	getText: (data) =>
+		`
 Hello ${data.userName},
 
-Welcome to ${data.appName || 'Bank App'}! Your account has been successfully verified.
+Welcome to ${data.appName || "Bank App"}! Your account has been successfully verified.
 
 Your account details:
 - Email: ${data.email}
@@ -144,10 +147,11 @@ Log in now to get started: ${data.loginUrl}
 If you have any questions, feel free to reach out to our support team.
 
 Best regards,
-${data.appName || 'Bank App'} Team
+${data.appName || "Bank App"} Team
     `.trim(),
-    
-    getHTML: (data) => `
+
+	getHTML: (data) =>
+		`
 <!DOCTYPE html>
 <html>
 <head>
@@ -190,7 +194,7 @@ ${data.appName || 'Bank App'} Team
 </head>
 <body>
     <div class="header">
-        <h1>🎉 Welcome to ${data.appName || 'Bank App'}!</h1>
+        <h1>🎉 Welcome to ${data.appName || "Bank App"}!</h1>
         <p>Your account is now active</p>
     </div>
     <div class="content">
@@ -222,31 +226,31 @@ ${data.appName || 'Bank App'} Team
         </p>
     </div>
     <div class="footer">
-        <p>© 2024 ${data.appName || 'Bank App'}. All rights reserved.</p>
+        <p>© 2024 ${data.appName || "Bank App"}. All rights reserved.</p>
     </div>
 </body>
 </html>
-    `.trim()
+    `.trim(),
 };
 
 /**
  * Transaction Notification Email Template
  */
 export const TRANSACTION_EMAIL = {
-    getSubject: (data) => {
-        const isIncoming = data.direction === 'T_IN';
-        return isIncoming 
-            ? `You received $${data.amount.toFixed(2)}` 
-            : `You sent $${data.amount.toFixed(2)}`;
-    },
-    
-    getText: (data) => {
-        const isIncoming = data.direction === 'T_IN';
-        return `
+	getSubject: (data) => {
+		const isIncoming = data.direction === "T_IN";
+		return isIncoming
+			? `You received $${data.amount.toFixed(2)}`
+			: `You sent $${data.amount.toFixed(2)}`;
+	},
+
+	getText: (data) => {
+		const isIncoming = data.direction === "T_IN";
+		return `
 Transaction Notification
 
-${isIncoming ? 'You received' : 'You sent'} $${data.amount.toFixed(2)}
-${isIncoming ? 'From' : 'To'}: ${data.peerEmail}
+${isIncoming ? "You received" : "You sent"} $${data.amount.toFixed(2)}
+${isIncoming ? "From" : "To"}: ${data.peerEmail}
 New Balance: $${data.balance.toFixed(2)}
 
 Transaction Date: ${new Date().toLocaleString()}
@@ -254,17 +258,17 @@ Transaction Date: ${new Date().toLocaleString()}
 For security, if you did not authorize this transaction, please contact support immediately.
 
 Best regards,
-${data.appName || 'Bank App'} Team
+${data.appName || "Bank App"} Team
         `.trim();
-    },
-    
-    getHTML: (data) => {
-        const isIncoming = data.direction === 'T_IN';
-        const headerColor = isIncoming ? '#059669' : '#dc2626';
-        const icon = isIncoming ? '💰' : '💸';
-        const title = isIncoming ? 'Money Received' : 'Money Sent';
-        
-        return `
+	},
+
+	getHTML: (data) => {
+		const isIncoming = data.direction === "T_IN";
+		const headerColor = isIncoming ? "#059669" : "#dc2626";
+		const icon = isIncoming ? "💰" : "💸";
+		const title = isIncoming ? "Money Received" : "Money Sent";
+
+		return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -305,10 +309,10 @@ ${data.appName || 'Bank App'} Team
         <h1>${icon} ${title}</h1>
     </div>
     <div class="content">
-        <p class="amount">${isIncoming ? '+' : '-'}$${data.amount.toFixed(2)}</p>
+        <p class="amount">${isIncoming ? "+" : "-"}$${data.amount.toFixed(2)}</p>
         
         <div class="detail-row">
-            <strong>${isIncoming ? 'From' : 'To'}:</strong> ${data.peerEmail}
+            <strong>${isIncoming ? "From" : "To"}:</strong> ${data.peerEmail}
         </div>
         <div class="detail-row">
             <strong>New Balance:</strong> $${data.balance.toFixed(2)}
@@ -324,16 +328,17 @@ ${data.appName || 'Bank App'} Team
 </body>
 </html>
         `.trim();
-    }
+	},
 };
 
 /**
  * Password Reset Email Template
  */
 export const PASSWORD_RESET_EMAIL = {
-    subject: 'Password Reset Request',
-    
-    getText: (data) => `
+	subject: "Password Reset Request",
+
+	getText: (data) =>
+		`
 Password Reset Request
 
 You requested to reset your password. Use this code to reset it:
@@ -345,10 +350,11 @@ This code will expire in ${data.expiryMinutes || 10} minutes.
 If you didn't request this, please ignore this email and your password will remain unchanged.
 
 Best regards,
-${data.appName || 'Bank App'} Team
+${data.appName || "Bank App"} Team
     `.trim(),
-    
-    getHTML: (data) => `
+
+	getHTML: (data) =>
+		`
 <!DOCTYPE html>
 <html>
 <head>
@@ -399,16 +405,17 @@ ${data.appName || 'Bank App'} Team
     </div>
 </body>
 </html>
-    `.trim()
+    `.trim(),
 };
 
 /**
  * Account Locked Email Template
  */
 export const ACCOUNT_LOCKED_EMAIL = {
-    subject: 'Account Security Alert - Account Locked',
-    
-    getText: (data) => `
+	subject: "Account Security Alert - Account Locked",
+
+	getText: (data) =>
+		`
 Security Alert
 
 Your account has been temporarily locked due to multiple failed login attempts.
@@ -418,10 +425,11 @@ Account will be unlocked: ${data.unlockTime}
 If this wasn't you, please contact support immediately.
 
 Best regards,
-${data.appName || 'Bank App'} Team
+${data.appName || "Bank App"} Team
     `.trim(),
-    
-    getHTML: (data) => `
+
+	getHTML: (data) =>
+		`
 <!DOCTYPE html>
 <html>
 <head>
@@ -451,16 +459,17 @@ ${data.appName || 'Bank App'} Team
     </div>
 </body>
 </html>
-    `.trim()
+    `.trim(),
 };
 
 /**
  * Transaction Failed Email Template
  */
 export const TRANSACTION_FAILED_EMAIL = {
-    getSubject: (data) => `Transaction Failed - ${data.reason}`,
-    
-    getText: (data) => `
+	getSubject: (data) => `Transaction Failed - ${data.reason}`,
+
+	getText: (data) =>
+		`
 Transaction Failed
 
 We were unable to process your transaction.
@@ -470,15 +479,16 @@ Amount: ${data.amount.toFixed(2)}
 To: ${data.toEmail}
 Time: ${new Date().toLocaleString()}
 
-${data.balanceCheck ? `Your current balance: ${data.currentBalance.toFixed(2)}` : ''}
+${data.balanceCheck ? `Your current balance: ${data.currentBalance.toFixed(2)}` : ""}
 
 Please try again or contact support if the problem persists.
 
 Best regards,
-${data.appName || 'Bank App'} Team
+${data.appName || "Bank App"} Team
     `.trim(),
-    
-    getHTML: (data) => `
+
+	getHTML: (data) =>
+		`
 <!DOCTYPE html>
 <html>
 <head>
@@ -518,31 +528,37 @@ ${data.appName || 'Bank App'} Team
         <div class="detail-row">
             <strong>Time:</strong> ${new Date().toLocaleString()}
         </div>
-        ${data.balanceCheck ? `
+        ${
+			data.balanceCheck
+				? `
         <div class="detail-row">
             <strong>Your Balance:</strong> ${data.currentBalance.toFixed(2)}
         </div>
-        ` : ''}
+        `
+				: ""
+		}
         
         <p style="margin-top: 20px;">
             Please try again or contact our support team if the problem persists.
         </p>
     </div>
     <div class="footer">
-        <p>© 2024 ${data.appName || 'Bank App'}. All rights reserved.</p>
+        <p>© 2024 ${data.appName || "Bank App"}. All rights reserved.</p>
     </div>
 </body>
 </html>
-    `.trim()
+    `.trim(),
 };
 
 /**
  * Account Verified Email Template
  */
 export const ACCOUNT_VERIFIED_EMAIL = {
-    subject: (data) => `Account Verified - Welcome to ${data.appName || 'Bank App'}! 🎉`,
-    
-    getText: (data) => `
+	subject: (data) =>
+		`Account Verified - Welcome to ${data.appName || "Bank App"}! 🎉`,
+
+	getText: (data) =>
+		`
 Great News!
 
 Hello ${data.userName},
@@ -562,10 +578,11 @@ Your account details:
 Start using your account: ${data.loginUrl}
 
 Best regards,
-${data.appName || 'Bank App'} Team
+${data.appName || "Bank App"} Team
     `.trim(),
-    
-    getHTML: (data) => `
+
+	getHTML: (data) =>
+		`
 <!DOCTYPE html>
 <html>
 <head>
@@ -648,20 +665,21 @@ ${data.appName || 'Bank App'} Team
         </center>
     </div>
     <div class="footer">
-        <p>© 2024 ${data.appName || 'Bank App'}. All rights reserved.</p>
+        <p>© 2024 ${data.appName || "Bank App"}. All rights reserved.</p>
     </div>
 </body>
 </html>
-    `.trim()
+    `.trim(),
 };
 
 /**
  * Low Balance Alert Email Template
  */
 export const LOW_BALANCE_EMAIL = {
-    subject: 'Low Balance Alert',
-    
-    getText: (data) => `
+	subject: "Low Balance Alert",
+
+	getText: (data) =>
+		`
 Low Balance Alert
 
 Hello ${data.userName},
@@ -676,10 +694,11 @@ Consider adding funds to avoid transaction failures.
 View your account: ${data.loginUrl}
 
 Best regards,
-${data.appName || 'Bank App'} Team
+${data.appName || "Bank App"} Team
     `.trim(),
-    
-    getHTML: (data) => `
+
+	getHTML: (data) =>
+		`
 <!DOCTYPE html>
 <html>
 <head>
@@ -722,20 +741,21 @@ ${data.appName || 'Bank App'} Team
         <p>Consider adding funds to avoid transaction failures and ensure uninterrupted service.</p>
     </div>
     <div class="footer">
-        <p>© 2024 ${data.appName || 'Bank App'}. All rights reserved.</p>
+        <p>© 2024 ${data.appName || "Bank App"}. All rights reserved.</p>
     </div>
 </body>
 </html>
-    `.trim()
+    `.trim(),
 };
 
 /**
  * Password Changed Confirmation Email Template
  */
 export const PASSWORD_CHANGED_EMAIL = {
-    subject: 'Password Changed Successfully',
-    
-    getText: (data) => `
+	subject: "Password Changed Successfully",
+
+	getText: (data) =>
+		`
 Password Changed
 
 Hello ${data.userName},
@@ -747,10 +767,11 @@ If you made this change, no action is needed.
 If you didn't change your password, please contact support immediately and secure your account.
 
 Best regards,
-${data.appName || 'Bank App'} Team
+${data.appName || "Bank App"} Team
     `.trim(),
-    
-    getHTML: (data) => `
+
+	getHTML: (data) =>
+		`
 <!DOCTYPE html>
 <html>
 <head>
@@ -773,33 +794,33 @@ ${data.appName || 'Bank App'} Team
         <p style="color: #dc2626;">❌ If you didn't change your password, please contact support immediately to secure your account.</p>
     </div>
     <div class="footer">
-        <p>© 2024 ${data.appName || 'Bank App'}. All rights reserved.</p>
+        <p>© 2024 ${data.appName || "Bank App"}. All rights reserved.</p>
     </div>
 </body>
 </html>
-    `.trim()
+    `.trim(),
 };
 
 /**
  * Helper function to get app-specific data
  */
 export function getAppDefaults() {
-    return {
-        appName: process.env.APP_NAME || 'Bank App',
-        loginUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
-        expiryMinutes: VERIFICATION.OTP_EXPIRY_MINUTES || 10
-    };
+	return {
+		appName: process.env.APP_NAME || "Bank App",
+		loginUrl: process.env.FRONTEND_URL || "http://localhost:3000",
+		expiryMinutes: VERIFICATION.OTP_EXPIRY_MINUTES || 10,
+	};
 }
 
 export default {
-    OTP_EMAIL,
-    WELCOME_EMAIL,
-    TRANSACTION_EMAIL,
-    PASSWORD_RESET_EMAIL,
-    ACCOUNT_LOCKED_EMAIL,
-    TRANSACTION_FAILED_EMAIL,
-    ACCOUNT_VERIFIED_EMAIL,
-    LOW_BALANCE_EMAIL,
-    PASSWORD_CHANGED_EMAIL,
-    getAppDefaults
+	OTP_EMAIL,
+	WELCOME_EMAIL,
+	TRANSACTION_EMAIL,
+	PASSWORD_RESET_EMAIL,
+	ACCOUNT_LOCKED_EMAIL,
+	TRANSACTION_FAILED_EMAIL,
+	ACCOUNT_VERIFIED_EMAIL,
+	LOW_BALANCE_EMAIL,
+	PASSWORD_CHANGED_EMAIL,
+	getAppDefaults,
 };

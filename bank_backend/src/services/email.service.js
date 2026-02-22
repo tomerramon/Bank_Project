@@ -152,11 +152,12 @@ export async function sendOTPEmail(email, otp, userName = "") {
 //  * @param {number} balance - Initial balance
  * @returns {Promise<Object>}
  */
-export async function sendWelcomeEmail(email, userName) {
+export async function sendWelcomeEmail(email, userName, balance) {
 	const data = {
 		...getAppDefaults(),
 		email,
 		userName,
+		balance,
 	};
 
 	return await sendEmail(

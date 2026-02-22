@@ -131,7 +131,7 @@ export async function sendPasswordResetNotification(user, otp) {
 
 export async function sendWelcomeNotification(user, userName) {
 	if (wantsEmail(user)) {
-		sendAsync(sendWelcomeEmail, [user.email, userName], "Welcome email");
+		sendAsync(sendWelcomeEmail, [user.email, userName, user.balance], "Welcome email");
 	}
 
 	if (wantsSMS(user)) {
