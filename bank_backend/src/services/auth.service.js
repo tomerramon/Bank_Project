@@ -60,10 +60,9 @@ export async function AuthenticateUser(email, password) {
 		await user.incrementLoginAttempts();
 
 		// Check if account should now be locked (after increment)
-		if (user.failedLoginAttempts > AUTH.MAX_LOGIN_ATTEMPTS) {
+		if (user.failedLoginAttempts + 1 >= AUTH.MAX_LOGIN_ATTEMPTS) {
 			throw new Error(
-				"Too many failed login attempts. " +
-					"Your account has been locked for 30 minutes.",
+				"Too many failed login attempts. Your account has been locked for 30 minutes.",
 			);
 		}
 
