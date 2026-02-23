@@ -14,6 +14,7 @@ import {
 	generateOTP,
 	verifyOTP,
 	canRequestOTP,
+	invalidateAllOTPs,
 } from "../services/otp.service.js";
 import {
 	validateSignupInputs,
@@ -389,6 +390,8 @@ export async function resetPasswordController(req, res) {
 		);
 		fullUser.refreshTokens = [];
 		await fullUser.save();
+
+		await invalidateAllOTPs(user._id);
 
 		const userName = user.profile?.firstName || "there";
 		sendPasswordChangedNotification(user, userName);
