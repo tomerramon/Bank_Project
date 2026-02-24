@@ -1,7 +1,14 @@
 import bcrypt from "bcryptjs";
 import Verifications from "../models/verification.model.js";
 import { AUTH, VERIFICATION } from "../config/constants.config.js";
-import { OTPLimitError } from "../utils/errors.util.js";
+import {
+	deleteExistingOTPs,
+	deleteExpiredOTP,
+	findValidOTP,
+	incrementAttempts,
+	insertOTP,
+	markOTPAsUsed,
+} from "../utils/query.util.js";
 
 /**
  * Generate a random OTP code
@@ -12,6 +19,13 @@ function generateOTPCode() {
 	// Generate random 6-digit number
 	const otp = Math.floor(100000 + Math.random() * 900000).toString();
 	return otp;
+}
+
+// create new OTP
+async function createOTP(userId, type, otpHash, expirationMinutes = 10) {
+	await deleteExistingOTPs(userId, type);
+	const expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
+	await insertOTP(userId, type, hashedOTP, expiresAt);
 }
 
 /**
@@ -46,8 +60,8 @@ export async function generateOTP(
 	// Hash OTP before storing (security best practice)
 	const hashedOTP = await bcrypt.hash(otpCode, AUTH.BCRYPT_SALT_ROUNDS);
 
-	// Store in database using model static method
-	await Verifications.createOTP(userId, type, hashedOTP, expirationMinutes);
+	// create new OTP and store it in DB.
+	await createOTP(userId, type, hashedOTP, expirationMinutes);
 
 	console.log(`✅ OTP generated for user ${userId}: ${otpCode}`);
 
@@ -65,7 +79,7 @@ export async function generateOTP(
  */
 export async function verifyOTP(userId, otpCode, type = "EMAIL_VERIFICATION") {
 	// Find valid OTP for this user and type
-	const verification = await Verifications.findValidOTP(userId, type);
+	const verification = await findValidOTP(userId, type);
 
 	if (!verification) {
 		console.log(`❌ No valid OTP found for user ${userId}`);
@@ -73,7 +87,7 @@ export async function verifyOTP(userId, otpCode, type = "EMAIL_VERIFICATION") {
 	}
 
 	// Check if max attempts reached
-	if (verification.hasReachedMaxAttempts()) {
+	if (verification.attempts >= VERIFICATION.MAX_OTP_ATTEMPTS) {
 		console.log(`❌ Max OTP attempts reached for user ${userId}`);
 		return false;
 	}
@@ -83,7 +97,7 @@ export async function verifyOTP(userId, otpCode, type = "EMAIL_VERIFICATION") {
 
 	if (!isMatch) {
 		// Increment failed attempts
-		await verification.incrementAttempts();
+		await incrementAttempts(verification._id);
 		console.log(
 			`❌ Invalid OTP for user ${userId}. Attempts: ${verification.attempts + 1}/5`,
 		);
@@ -91,7 +105,7 @@ export async function verifyOTP(userId, otpCode, type = "EMAIL_VERIFICATION") {
 	}
 
 	// Mark OTP as used
-	await verification.markAsUsed();
+	await markOTPAsUsed(verification._id);
 	console.log(`✅ OTP verified successfully for user ${userId}`);
 
 	return true;
@@ -147,7 +161,7 @@ export async function canRequestOTP(userId, type = "EMAIL_VERIFICATION") {
  * @returns {Promise<Object|null>} - Verification document or null
  */
 export async function getValidOTP(userId, type = "EMAIL_VERIFICATION") {
-	return await Verifications.findValidOTP(userId, type);
+	return await findValidOTP(userId, type);
 }
 
 /**
@@ -176,7 +190,7 @@ export async function invalidateAllOTPs(userId) {
  * @returns {Promise<number>} - Number of OTPs deleted
  */
 export async function cleanupOldOTPs() {
-	const count = await Verifications.cleanupOldVerifications();
+	const count = await deleteExpiredOTP();
 	console.log(`🧹 Cleaned up ${count} old OTP records`);
 	return count;
 }
