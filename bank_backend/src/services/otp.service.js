@@ -153,18 +153,6 @@ export async function canRequestOTP(userId, type = "EMAIL_VERIFICATION") {
 }
 
 /**
- * Check if OTP exists and is still valid
- * Useful for checking before resending
- *
- * @param {string} userId - User's ID
- * @param {string} type - Verification type
- * @returns {Promise<Object|null>} - Verification document or null
- */
-export async function getValidOTP(userId, type = "EMAIL_VERIFICATION") {
-	return await findValidOTP(userId, type);
-}
-
-/**
  * Invalidate all OTPs for a user (security measure)
  * Useful when password is changed or account is compromised
  *

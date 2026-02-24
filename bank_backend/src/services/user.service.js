@@ -17,10 +17,7 @@ import {
 	ValidationError,
 	UserNotFoundError,
 } from "../utils/errors.util.js";
-import {
-	sendAccountVerifiedNotification,
-	sendLowBalanceNotification,
-} from "./notification.service.js";
+import { sendLowBalanceNotification } from "./notification.service.js";
 import {
 	findUserById,
 	checkEmailExists,

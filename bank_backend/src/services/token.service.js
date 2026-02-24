@@ -88,22 +88,3 @@ export async function invalidateRefreshToken(refreshToken) {
 		return true;
 	}
 }
-
-/**
- * Invalidate all refresh tokens for a user (logout from all devices)
- * @param {string} userId
- * @returns {Promise<number>} - Number of tokens invalidated
- */
-export async function invalidateAllRefreshTokens(userId) {
-	const user = await Users.findById(userId);
-
-	if (!user) {
-		throw new Error("User not found");
-	}
-
-	const count = user.refreshTokens.length;
-	user.refreshTokens = [];
-	await user.save();
-
-	return count;
-}
