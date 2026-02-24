@@ -8,6 +8,8 @@ import {
 	addRefreshToken,
 	findUserByEmailWithPassword,
 	findUserByIdWithPassword,
+	incrementFailedLoginAttempts,
+	lockUserAccount,
 	resetUserLoginAttempts,
 } from "../utils/query.util.js";
 import {
@@ -19,9 +21,11 @@ import {
 import {
 	UserNotFoundError,
 	AuthenticationError,
+	AccountLockedError,
 } from "../utils/errors.util.js";
 import { AUTH } from "../config/constants.config.js";
 import { invalidateAllOTPs } from "./otp.service.js";
+import { sendAccountLockedNotification } from "./notification.service.js";
 
 /**
  * Authenticate user with email and password
@@ -59,23 +63,32 @@ export async function AuthenticateUser(email, password) {
 	const isPasswordMatch = await bcrypt.compare(password, user.passwordHash);
 
 	if (!isPasswordMatch) {
-		// Increment failed login attempts
-		await user.incrementLoginAttempts();
+		// If a previous lock has expired, treat this as a fresh start
+		if (user.accountLockedUntil && user.accountLockedUntil < new Date()) {
+			await resetUserLoginAttempts(user._id);
+			await incrementFailedLoginAttempts(user._id);
+			return authError;
+		}
+		if (user.accountLockedUntil && user.accountLockedUntil > new Date()) {
+			throw new AccountLockedError(
+				Math.ceil(user.accountLockedUntil - Date.now() / 6000),
+			);
+		}
 
-		// Check if account should now be locked (after increment)
+		await incrementFailedLoginAttempts(user._id);
+
+		// Use +1 because incrementFailedLoginAttempts wrote to DB but
+		// didn't mutate the in-memory user object
 		const attemptsAfterIncrement = user.failedLoginAttempts + 1;
+
 		if (attemptsAfterIncrement >= AUTH.MAX_LOGIN_ATTEMPTS) {
-			const unlockTime = new Date(
-				Date.now() + AUTH.ACCOUNT_LOCK_DURATION,
-			);
-			const unlockMinutes = Math.ceil(AUTH.ACCOUNT_LOCK_DURATION / 60000);
+			const lockUntil = new Date(Date.now() + AUTH.ACCOUNT_LOCK_DURATION);
+			await lockUserAccount(user._id, lockUntil);
 
-			// Fire notification (async, non-blocking)
-			sendAccountLockedNotification(user, unlockTime, unlockMinutes);
+			const lockMinutes = Math.ceil(AUTH.ACCOUNT_LOCK_DURATION / 60000);
+			sendAccountLockedNotification(user, lockUntil, lockMinutes);
 
-			throw new Error(
-				`Too many failed login attempts. Your account has been locked for ${unlockMinutes} minutes.`,
-			);
+			throw new AccountLockedError(lockMinutes);
 		}
 
 		throw authError;

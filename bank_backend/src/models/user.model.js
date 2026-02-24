@@ -155,32 +155,4 @@ userSchema.virtual("fullName").get(function () {
 	return this.email;
 });
 
-/**
- * Increment failed login attempts
- * Locks account for 30 minutes after 5 failed attempts
- *
- * @returns {Promise} - Update operation result
- */
-userSchema.methods.incrementLoginAttempts = function () {
-	// If we have a previous lock that has expired, restart attempts to 1
-	if (this.accountLockedUntil && this.accountLockedUntil < Date.now()) {
-		return this.updateOne({
-			$set: { failedLoginAttempts: 1 },
-			$unset: { accountLockedUntil: 1 },
-		});
-	}
-	// Otherwise increment failed attempts
-	const updates = { $inc: { failedLoginAttempts: 1 } };
-
-	// Lock account for 30 minutes after 5 failed attempts
-	const MAX_ATTEMPTS = 5;
-	if (this.failedLoginAttempts + 1 >= MAX_ATTEMPTS) {
-		updates.$set = {
-			accountLockedUntil: new Date(Date.now() + 30 * 60 * 1000),
-		};
-	}
-
-	return this.updateOne(updates);
-};
-
 export default mongoose.model("Users", userSchema);
