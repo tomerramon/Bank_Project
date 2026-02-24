@@ -278,29 +278,3 @@ export function requireDifferentUsers(userId1, userId2) {
 		);
 	}
 }
-
-// ==========================================
-// SANITIZATION
-// ==========================================
-
-export function sanitizeUser(user) {
-	const plainUser = user.toObject ? user.toObject() : user;
-
-	const {
-		passwordHash,
-		refreshTokens,
-		__v,
-		failedLoginAttempts,
-		accountLockedUntil,
-		...safeUser
-	} = plainUser;
-
-	return safeUser;
-}
-
-export function sanitizeUserForToken(user) {
-	return {
-		id: user._id || user.id,
-		email: user.email,
-	};
-}

@@ -48,12 +48,6 @@ export async function findUserByEmailWithPassword(email) {
 	);
 }
 
-export async function findUserByPhone(phone) {
-	return await Users.findOne({ phone }).select(
-		"email phone isVerified accountStatus notificationPreferences",
-	);
-}
-
 /**
  * Find and validate user is ready for operations
  */
@@ -70,14 +64,6 @@ export async function checkEmailExists(email) {
 export async function checkPhoneExists(phone) {
 	const count = await Users.countDocuments({ phone });
 	return count > 0;
-}
-
-export async function updateUserBalance(userId, amountInCents, session = null) {
-	return await Users.updateOne(
-		{ _id: userId },
-		{ $inc: { balance: amountInCents } },
-		{ session },
-	);
 }
 
 export async function setUserVerified(userId) {
