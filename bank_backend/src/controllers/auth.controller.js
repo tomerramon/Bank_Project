@@ -34,6 +34,8 @@ import {
 	findUserByIdWithPassword,
 	findUserById,
 	findUserByEmail,
+	changeUserPassword,
+	removeAllRefreshTokens,
 } from "../utils/query.util.js";
 import {
 	setRefreshTokenCookie,
@@ -383,14 +385,12 @@ export async function resetPasswordController(req, res) {
 				);
 		}
 
-		const fullUser = await findUserByIdWithPassword(user._id);
-		fullUser.passwordHash = await bcrypt.hash(
+		const newHashPassword = await bcrypt.hash(
 			newPassword,
 			AUTH.BCRYPT_SALT_ROUNDS,
 		);
-		fullUser.refreshTokens = [];
-		await fullUser.save();
-
+		await changeUserPassword(user._id, newHashPassword);
+		await removeAllRefreshTokens(user._id);
 		await invalidateAllOTPs(user._id);
 
 		const userName = user.profile?.firstName || "there";

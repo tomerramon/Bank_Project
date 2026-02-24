@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { generateAccessToken, generateRefreshToken } from "./jwt.service.js";
 import {
 	addRefreshToken,
+	changeUserPassword,
 	findUserByEmailWithPassword,
 	findUserByIdWithPassword,
 	incrementFailedLoginAttempts,
@@ -146,10 +147,12 @@ export async function changePassword(userId, oldPassword, newPassword) {
 	validatePassword(newPassword);
 
 	// Update password
-	user.passwordHash = await bcrypt.hash(newPassword, AUTH.BCRYPT_SALT_ROUNDS);
-	user.refreshTokens = []; // Logout from all devices
-	await user.save();
-
+	const newHashPassword = await bcrypt.hash(
+		newPassword,
+		AUTH.BCRYPT_SALT_ROUNDS,
+	);
+	await changeUserPassword(userId, newHashPassword);
+	await removeAllRefreshTokens(userId);
 	await invalidateAllOTPs(userId);
 
 	return { message: "Password changed successfully. Please log in again." };

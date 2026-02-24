@@ -122,6 +122,14 @@ export async function lockUserAccount(userId, lockedUntil) {
 	);
 }
 
+export async function changeUserPassword(userId, newPassword) {
+	return await Users.findByIdAndUpdate(userId, {
+		$set: {
+			passwordHash: newPassword,
+		},
+	});
+}
+
 // ==========================================
 // USER QUERIES for refresh tokens manegement
 // ==========================================
