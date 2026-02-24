@@ -184,18 +184,6 @@ export async function invalidateAllOTPs(userId) {
 }
 
 /**
- * Cleanup old OTP records (run periodically via cron)
- * Removes used OTPs older than 3 days
- *
- * @returns {Promise<number>} - Number of OTPs deleted
- */
-export async function cleanupOldOTPs() {
-	const count = await deleteExpiredOTP();
-	console.log(`🧹 Cleaned up ${count} old OTP records`);
-	return count;
-}
-
-/**
  * Get OTP statistics for monitoring
  * Useful for detecting abuse or system issues
  *

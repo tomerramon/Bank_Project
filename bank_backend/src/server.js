@@ -2,9 +2,11 @@ import "dotenv/config";
 import app from "./app.js";
 import { connectDB, disconnectDB } from "./config/mongodb.config.js";
 import { destroyLimiters } from "./middlewares/rateLimit.middleware.js";
-import { cleanupOldOTPs } from "./services/otp.service.js";
 import Users from "./models/user.model.js";
-import { deleteStaleRefreshTokens } from "./utils/query.util.js";
+import {
+	deleteExpiredOTP,
+	deleteStaleRefreshTokens,
+} from "./utils/query.util.js";
 
 const port = process.env.PORT || 5000;
 const host = process.env.HOST || "0.0.0.0";
@@ -18,21 +20,25 @@ async function startServer() {
 		console.log(`Starting server in ${environment} mode...`);
 		await connectDB();
 
-		setInterval(
+		const otpCleanupInterval = setInterval(
 			async () => {
 				try {
-					await cleanupOldOTPs();
+					const count = await deleteExpiredOTP();
+					console.log(`🧹 Cleaned up ${count} old OTP records`);
 				} catch (err) {
 					console.error("OTP cleanup failed:", err.message);
 				}
 			},
-			6 * 60 * 60 * 1000, //delete used OTPs older the 3 days every 6 hours.
+			1 * 60 * 60 * 1000, //every hour, delete all OTPs past their expiresAt
 		);
 
-		setInterval(
+		// Refresh token cleanup — every 24 hours, purge tokens older than 7 days
+		// The pre-save 5-token cap handles active users. This handles inactive users.
+		const tokenCleanupInterval = setInterval(
 			async () => {
 				try {
 					await deleteStaleRefreshTokens();
+					console.log("🧹 Stale refresh tokens cleaned up");
 				} catch (err) {
 					console.error("Refresh token cleanup failed:", err.message);
 				}
@@ -91,6 +97,10 @@ async function gracefulShutdown(signal) {
 		}, 10000);
 	} else {
 		await disconnectDB();
+
+		clearInterval(otpCleanupInterval);
+		clearInterval(tokenCleanupInterval);
+
 		process.exit(0);
 	}
 }

@@ -127,6 +127,7 @@ export async function lockUserAccount(userId, lockedUntil) {
 // ==========================================
 /**
  * Add a new refresh token to user's tokens array
+ * keep only the most recent 5 tokens to prevent memory issues and force re-login on old devices
  * @param {string} userId - user's id to update
  * @param {string} token - Refresh token to add
  * @returns {Promise} - Save operation result
@@ -134,7 +135,15 @@ export async function lockUserAccount(userId, lockedUntil) {
 export async function addRefreshToken(userId, token) {
 	return await Users.findByIdAndUpdate(
 		userId,
-		{ $push: { refreshTokens: { token, createdAt: new Date() } } },
+		{
+			$push: {
+				refreshTokens: {
+					$each: [{ token, createdAt: new Date() }],
+					$sort: { createdAt: -1 },
+					$slice: AUTH.MAX_REFRESH_TOKENS, // Keep only the most recent 5 tokens
+				},
+			},
+		},
 		{ new: true },
 	);
 }

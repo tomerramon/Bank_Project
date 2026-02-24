@@ -1,4 +1,5 @@
 import Users from "../models/user.model.js";
+import { addRefreshToken, removeRefreshToken } from "../utils/query.util.js";
 import {
 	verifyRefreshToken,
 	generateAccessToken,
@@ -57,10 +58,7 @@ export async function updateRefreshToken(oldRefreshToken) {
 	const newRefreshToken = generateRefreshToken(user);
 
 	// Step 7: Store new refresh token
-	user.refreshTokens.push({
-		token: newRefreshToken,
-		createdAt: new Date(),
-	});
+	await addRefreshToken(user._id, newRefreshToken);
 
 	await user.save();
 
@@ -81,10 +79,7 @@ export async function invalidateRefreshToken(refreshToken) {
 		const user = await Users.findById(payload.id);
 
 		if (user) {
-			user.refreshTokens = user.refreshTokens.filter(
-				(rt) => rt.token !== refreshToken,
-			);
-			await user.save();
+			await removeRefreshToken(user._id, refreshToken);
 		}
 
 		return true;
@@ -112,21 +107,3 @@ export async function invalidateAllRefreshTokens(userId) {
 
 	return count;
 }
-
-
-
-// // ==========================================
-// // PRE-SAVE HOOKS
-// // ==========================================
-// /**
-//  * Pre-save hook: Limit refresh tokens to 5 per user
-//  * This prevents memory issues and forces re-login on old devices
-//  */
-// userSchema.pre("save", function () {
-// 	if (this.refreshTokens && this.refreshTokens.length > 5) {
-// 		// Keep only the 5 most recent tokens
-// 		this.refreshTokens = this.refreshTokens
-// 			.sort((a, b) => b.createdAt - a.createdAt)
-// 			.slice(0, 5);
-// 	}
-// });
