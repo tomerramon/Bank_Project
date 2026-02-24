@@ -5,8 +5,10 @@
 import bcrypt from "bcryptjs";
 import { generateAccessToken, generateRefreshToken } from "./jwt.service.js";
 import {
+	addRefreshToken,
 	findUserByEmailWithPassword,
 	findUserByIdWithPassword,
+	resetUserLoginAttempts,
 } from "../utils/query.util.js";
 import {
 	requireActive,
@@ -19,6 +21,7 @@ import {
 	AuthenticationError,
 } from "../utils/errors.util.js";
 import { AUTH } from "../config/constants.config.js";
+import { invalidateAllOTPs } from "./otp.service.js";
 
 /**
  * Authenticate user with email and password
@@ -60,24 +63,33 @@ export async function AuthenticateUser(email, password) {
 		await user.incrementLoginAttempts();
 
 		// Check if account should now be locked (after increment)
-		if (user.failedLoginAttempts + 1 >= AUTH.MAX_LOGIN_ATTEMPTS) {
+		const attemptsAfterIncrement = user.failedLoginAttempts + 1;
+		if (attemptsAfterIncrement >= AUTH.MAX_LOGIN_ATTEMPTS) {
+			const unlockTime = new Date(
+				Date.now() + AUTH.ACCOUNT_LOCK_DURATION,
+			);
+			const unlockMinutes = Math.ceil(AUTH.ACCOUNT_LOCK_DURATION / 60000);
+
+			// Fire notification (async, non-blocking)
+			sendAccountLockedNotification(user, unlockTime, unlockMinutes);
+
 			throw new Error(
-				"Too many failed login attempts. Your account has been locked for 30 minutes.",
+				`Too many failed login attempts. Your account has been locked for ${unlockMinutes} minutes.`,
 			);
 		}
 
 		throw authError;
 	}
 
-	// Successful login - reset failed attempts counter
-	await user.resetLoginAttempts();
+	// Successful login - reset failed attempts counter and lock time
+	await resetUserLoginAttempts(user._id);
 
 	// Generate tokens
 	const accessToken = generateAccessToken(user);
 	const refreshToken = generateRefreshToken(user);
 
 	// Store refresh token in database for validation and revocation
-	await user.addRefreshToken(refreshToken);
+	await addRefreshToken(user._id, refreshToken);
 
 	return {
 		token: accessToken,
@@ -124,6 +136,8 @@ export async function changePassword(userId, oldPassword, newPassword) {
 	user.passwordHash = await bcrypt.hash(newPassword, AUTH.BCRYPT_SALT_ROUNDS);
 	user.refreshTokens = []; // Logout from all devices
 	await user.save();
+
+	await invalidateAllOTPs(userId);
 
 	return { message: "Password changed successfully. Please log in again." };
 }

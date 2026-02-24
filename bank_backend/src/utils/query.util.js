@@ -8,12 +8,14 @@
 
 import Users from "../models/user.model.js";
 import Transactions from "../models/transaction.model.js";
+import Verifications from "../models/verification.model.js";
 import { validateUserForOperation } from "./validations.util.js";
 import mongoose from "mongoose";
+import { AUTH } from "../config/constants.config.js";
+
 // ==========================================
 // USER QUERIES
 // ==========================================
-
 export async function findUserById(userId, session = null) {
 	const query = Users.findById(userId).select(
 		"email balance isVerified accountStatus phone profile notificationPreferences createdAt",
@@ -94,10 +96,92 @@ export async function updateNotificationPreferences(userId, preferences) {
 	).select("email notificationPreferences");
 }
 
+export async function incrementFailedLoginAttempts(userId) {
+	return await Users.updateOne(
+		{ _id: userId },
+		{
+			$inc: { failedLoginAttempts: 1 },
+		},
+	);
+}
+
+export async function resetUserLoginAttempts(userId) {
+	return await Users.updateOne(
+		{ _id: userId },
+		{
+			$set: { failedLoginAttempts: 0 },
+			$unset: { accountLockedUntil: 1 },
+		},
+	);
+}
+
+export async function lockUserAccount(userId, lockedUntil) {
+	return await Users.updateOne(
+		{ _id: userId },
+		{ $set: { accountLockedUntil: lockedUntil } },
+	);
+}
+
+// ==========================================
+// USER QUERIES for refresh tokens manegement
+// ==========================================
+/**
+ * Add a new refresh token to user's tokens array
+ * @param {string} userId - user's id to update
+ * @param {string} token - Refresh token to add
+ * @returns {Promise} - Save operation result
+ */
+export async function addRefreshToken(userId, token) {
+	return await Users.findByIdAndUpdate(
+		userId,
+		{ $push: { refreshTokens: { token, createdAt: new Date() } } },
+		{ new: true },
+	);
+}
+
+/**
+ * Remove a specific refresh token from user
+ * @param {string} userId - user's id to remove token from.
+ * @param {string} token - Token to remove
+ * @returns {Promise} - Update operation result
+ */
+export async function removeRefreshToken(userId, token) {
+	return await Users.updateOne(
+		{ _id: userId },
+		{ $pull: { refreshTokens: { token } } },
+	);
+}
+
+/**
+ * Remove all refresh tokens (logout from all devices)
+ * @param {string} userId - user's id to remove all tokens from.
+ * @returns {Promise} - Update operation result
+ */
+export async function removeAllRefreshTokens(userId) {
+	return await Users.updateOne(
+		{ _id: userId },
+		{ $set: { refreshTokens: [] } },
+	);
+}
+
+/**
+ * Clean up old refresh tokens (run periodically via cron job)
+ *
+ * @returns {Promise} - Update operation result
+ */
+export async function deleteStaleRefreshTokens() {
+	const cutoff = new Date(
+		Date.now() - AUTH.REFRESH_TOKEN_CLEANUP_DAYS * 24 * 60 * 60 * 1000,
+	);
+	return await Users.updateMany(
+		{ "refreshTokens.createdAt": { $lt: cutoff } },
+		{ $pull: { refreshTokens: { createdAt: { $lt: cutoff } } } },
+	);
+}
+
 // ==========================================
 // TRANSACTION QUERIES
 // ==========================================
-
 export async function createTransactionPair(
 	fromUserId,
 	toUserId,
@@ -164,6 +248,7 @@ export async function findTransactionsByUser(userId, options = {}) {
 			limit,
 			total,
 			totalPages: Math.ceil(total / limit),
+			hasMore: skip + transactions.length < total, // what ois this and the 2 below
 			hasNextPage: page * limit < total,
 			hasPreviousPage: page > 1,
 		},
@@ -200,6 +285,48 @@ export async function getTransactionStats(userId) {
 	]);
 }
 
+// ==========================================
+// VERIFICATION QUERIES
+// ==========================================
+export async function insertOTP(userId, type, hashedOTP, expiresAt) {
+	return await Verifications.create({ userId, type, hashedOTP, expiresAt });
+}
+
+export async function deleteExistingOTPs(userId, type) {
+	return await Verifications.deleteMany({ userId, type, isUsed: false });
+}
+
+// find latest valid OTP of a user.
+export async function findValidOTP(userId, type) {
+	return Verifications.findOne({
+		userId,
+		type,
+		isUsed: false,
+		expiresAt: { $gt: new Date() },
+	}).sort({ createdAt: -1 }); // Get the most recent one
+}
+
+// mark as OTP as used
+export async function markOTPAsUsed(otpId) {
+	return await Verifications.findByIdAndUpdate(otpId, {
+		$set: { isUsed: true, verifiedAt: new Date() },
+	});
+}
+
+// increment attempts
+export async function incrementAttempts(otpId) {
+	return await Verifications.findByIdAndUpdate(otpId, {
+		$inc: { attempts: 1 },
+	});
+}
+
+export async function deleteExpiredOTP() {
+	const result = await Verifications.deleteMany({
+		expiresAt: { $lt: new Date() },
+	});
+
+	return result.deletedCount;
+}
 // ==========================================
 // HELPER FUNCTIONS
 // ==========================================

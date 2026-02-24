@@ -61,12 +61,10 @@ const userSchema = new mongoose.Schema(
 				token: {
 					type: String,
 					required: true,
-					index: true, // Index for fast logout lookups
 				},
 				createdAt: {
 					type: Date,
 					default: Date.now,
-					expires: 604800, // TTL: 7 days in seconds (MongoDB auto-deletes)
 				},
 			},
 		],
@@ -143,12 +141,8 @@ const userSchema = new mongoose.Schema(
 // Compound indexes for common query patterns
 userSchema.index({ email: 1, accountStatus: 1 }); // Filter active users by email
 userSchema.index({ createdAt: -1 }); // Sort by registration date
-// userSchema.index({ 'refreshTokens.token': 1 }); // Fast logout lookups
+userSchema.index({ "refreshTokens.token": 1 }); // Fast logout lookups
 userSchema.index({ phone: 1, accountStatus: 1 }); // Filter active users by phone
-
-// ==========================================
-// VIRTUALS
-// ==========================================
 
 /**
  * Virtual property: Get user's full name
@@ -160,19 +154,6 @@ userSchema.virtual("fullName").get(function () {
 	}
 	return this.email;
 });
-
-// ==========================================
-// INSTANCE METHODS
-// ==========================================
-
-/**
- * Check if account is currently locked
- *
- * @returns {boolean} - true if account is locked
- */
-userSchema.methods.isAccountLocked = function () {
-	return this.accountLockedUntil && this.accountLockedUntil > Date.now();
-};
 
 /**
  * Increment failed login attempts
@@ -201,137 +182,5 @@ userSchema.methods.incrementLoginAttempts = function () {
 
 	return this.updateOne(updates);
 };
-
-/**
- * Reset failed login attempts on successful login
- *
- * @returns {Promise} - Update operation result
- */
-userSchema.methods.resetLoginAttempts = function () {
-	return this.updateOne({
-		$set: { failedLoginAttempts: 0 },
-		$unset: { accountLockedUntil: 1 },
-	});
-};
-
-/**
- * Add a new refresh token to user's tokens array
- *
- * @param {string} token - Refresh token to add
- * @returns {Promise} - Save operation result
- */
-userSchema.methods.addRefreshToken = async function (token) {
-	this.refreshTokens.push({
-		token,
-		createdAt: new Date(),
-	});
-	return this.save();
-};
-
-/**
- * Remove a specific refresh token
- *
- * @param {string} token - Token to remove
- * @returns {Promise} - Update operation result
- */
-userSchema.methods.removeRefreshToken = function (token) {
-	return this.updateOne({
-		$pull: { refreshTokens: { token } },
-	});
-};
-
-/**
- * Remove all refresh tokens (logout from all devices)
- *
- * @returns {Promise} - Update operation result
- */
-userSchema.methods.removeAllRefreshTokens = function () {
-	return this.updateOne({
-		$set: { refreshTokens: [] },
-	});
-};
-
-/**
- * Check if user wants email notifications
- *
- * @returns {boolean} - true if email notifications are enabled
- */
-userSchema.methods.wantsEmailNotifications = function () {
-	return this.notificationPreferences?.email !== false; // Default true
-};
-
-/**
- * Check if user wants SMS notifications
- *
- * @returns {boolean} - true if SMS notifications are enabled
- */
-userSchema.methods.wantsSMSNotifications = function () {
-	return this.notificationPreferences?.sms === true; // Default false
-};
-
-// ==========================================
-// STATIC METHODS
-// ==========================================
-
-/**
- * Clean up old refresh tokens (run periodically via cron job)
- * This is a backup cleanup in case TTL index doesn't work
- *
- * @returns {Promise} - Update operation result
- */
-userSchema.statics.cleanRefreshTokens = async function () {
-	const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-	return this.updateMany(
-		{ "refreshTokens.createdAt": { $lt: sevenDaysAgo } },
-		{ $pull: { refreshTokens: { createdAt: { $lt: sevenDaysAgo } } } },
-	);
-};
-
-/**
- * Find user by email (case-insensitive)
- *
- * @param {string} email - User email
- * @returns {Promise} - User document or null
- */
-userSchema.statics.findByEmail = function (email) {
-	return this.findOne({ email: email.toLowerCase() });
-};
-
-/**
- * Find user by phone
- *
- * @param {string} phone - User phone
- * @returns {Promise} - User document or null
- */
-userSchema.statics.findByPhone = function (phone) {
-	return this.findOne({ phone });
-};
-
-// ==========================================
-// PRE-SAVE HOOKS
-// ==========================================
-
-/**
- * Pre-save hook: Ensure email is lowercase
- */
-userSchema.pre("save", function () {
-	if (this.email) {
-		this.email = this.email.toLowerCase();
-	}
-});
-
-/**
- * Pre-save hook: Limit refresh tokens to 5 per user
- * This prevents memory issues and forces re-login on old devices
- */
-userSchema.pre("save", function () {
-	if (this.refreshTokens && this.refreshTokens.length > 5) {
-		// Keep only the 5 most recent tokens
-		this.refreshTokens = this.refreshTokens
-			.sort((a, b) => b.createdAt - a.createdAt)
-			.slice(0, 5);
-	}
-});
 
 export default mongoose.model("Users", userSchema);

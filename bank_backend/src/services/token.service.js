@@ -112,3 +112,21 @@ export async function invalidateAllRefreshTokens(userId) {
 
 	return count;
 }
+
+
+
+// // ==========================================
+// // PRE-SAVE HOOKS
+// // ==========================================
+// /**
+//  * Pre-save hook: Limit refresh tokens to 5 per user
+//  * This prevents memory issues and forces re-login on old devices
+//  */
+// userSchema.pre("save", function () {
+// 	if (this.refreshTokens && this.refreshTokens.length > 5) {
+// 		// Keep only the 5 most recent tokens
+// 		this.refreshTokens = this.refreshTokens
+// 			.sort((a, b) => b.createdAt - a.createdAt)
+// 			.slice(0, 5);
+// 	}
+// });

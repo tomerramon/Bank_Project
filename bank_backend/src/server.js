@@ -2,6 +2,9 @@ import "dotenv/config";
 import app from "./app.js";
 import { connectDB, disconnectDB } from "./config/mongodb.config.js";
 import { destroyLimiters } from "./middlewares/rateLimit.middleware.js";
+import { cleanupOldOTPs } from "./services/otp.service.js";
+import Users from "./models/user.model.js";
+import { deleteStaleRefreshTokens } from "./utils/query.util.js";
 
 const port = process.env.PORT || 5000;
 const host = process.env.HOST || "0.0.0.0";
@@ -14,6 +17,28 @@ async function startServer() {
 		// 1. Connect to Database
 		console.log(`Starting server in ${environment} mode...`);
 		await connectDB();
+
+		setInterval(
+			async () => {
+				try {
+					await cleanupOldOTPs();
+				} catch (err) {
+					console.error("OTP cleanup failed:", err.message);
+				}
+			},
+			6 * 60 * 60 * 1000, //delete used OTPs older the 3 days every 6 hours.
+		);
+
+		setInterval(
+			async () => {
+				try {
+					await deleteStaleRefreshTokens();
+				} catch (err) {
+					console.error("Refresh token cleanup failed:", err.message);
+				}
+			},
+			24 * 60 * 60 * 1000, //purge refresh tokens older than 7 days from all users once a day.
+		);
 
 		// 2. Start HTTP Server
 		server = app.listen(port, host, () => {
@@ -44,8 +69,8 @@ async function startServer() {
 // Graceful shutdown function
 async function gracefulShutdown(signal) {
 	console.log(`\n⚠️  ${signal} received. Starting graceful shutdown...`);
-	
-    destroyLimiters();
+
+	destroyLimiters();
 
 	if (server) {
 		// Stop accepting new connections
