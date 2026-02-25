@@ -5,7 +5,7 @@
  *
  */
 
-import { isProduction } from "../config/constants.config";
+import { isProduction } from "../config/constants.config.js";
 
 /**
  * Set refresh token as HTTP-only cookie

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { TRANSACTION } from "../config/constants.config";
+import { TRANSACTION } from "../config/constants.config.js";
 
 const transactionSchema = new mongoose.Schema(
 	{

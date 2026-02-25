@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { DATABASE, isProduction } from "./constants.config";
+import { DATABASE, isProduction } from "./constants.config.js";
 
 // Connection options for production-ready setup
 const options = {

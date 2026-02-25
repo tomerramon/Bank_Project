@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { VERIFICATION } from "../config/constants.config";
+import { VERIFICATION } from "../config/constants.config.js";
 
 const verificationSchema = new mongoose.Schema(
 	{
