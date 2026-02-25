@@ -1,4 +1,9 @@
 import Users from "../models/user.model.js";
+import {
+	InactiveAccountError,
+	InvalidTokenError,
+	UserNotFoundError,
+} from "../utils/errors.util.js";
 import { addRefreshToken, removeRefreshToken } from "../utils/query.util.js";
 import {
 	verifyRefreshToken,
@@ -17,13 +22,13 @@ export async function updateRefreshToken(oldRefreshToken) {
 	try {
 		payload = verifyRefreshToken(oldRefreshToken);
 	} catch (error) {
-		throw new Error(`Invalid refresh token: ${error.message}`);
+		throw new InvalidTokenError(error.message);
 	}
 
 	// Step 2: Find user
 	const user = await Users.findById(payload.id);
 	if (!user) {
-		throw new Error("User not found");
+		throw new UserNotFoundError();
 	}
 
 	// Step 3: Check if this refresh token exists in user's tokens
@@ -37,15 +42,14 @@ export async function updateRefreshToken(oldRefreshToken) {
 		user.refreshTokens = [];
 		await user.save();
 
-		throw new Error(
-			"Refresh token reuse detected. " +
-				"All sessions have been invalidated. Please log in again.",
+		throw new InvalidTokenError(
+			"Refresh token reuse detected. All sessions have been invalidated. Please log in again.",
 		);
 	}
 
 	// Step 4: Check account status
 	if (user.accountStatus !== "active") {
-		throw new Error("Account is not active");
+		throw new InactiveAccountError();
 	}
 
 	// Step 5: Remove old refresh token

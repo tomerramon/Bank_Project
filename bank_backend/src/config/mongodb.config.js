@@ -1,12 +1,13 @@
 import mongoose from "mongoose";
+import { DATABASE, isProduction } from "./constants.config";
 
 // Connection options for production-ready setup
 const options = {
 	dbName: "bankDB",
-	maxPoolSize: 10, // Maximum number of connections in pool
-	minPoolSize: 2, // Minimum number of connections
-	socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-	serverSelectionTimeoutMS: 5000, // Timeout for server selection
+	maxPoolSize: DATABASE.CONNECTION_POOL_SIZE_MAX, // Maximum number of connections in pool
+	minPoolSize: DATABASE.CONNECTION_POOL_SIZE_MIN, // Minimum number of connections
+	socketTimeoutMS: DATABASE.SOCKET_TIMEOUT_MS, // Close sockets after 45 seconds of inactivity
+	serverSelectionTimeoutMS: DATABASE.SERVER_SELECTION_TIMEOUT_MS, // Timeout for server selection
 	family: 4, // Use IPv4, skip trying IPv6
 };
 
@@ -43,7 +44,7 @@ export async function connectDB() {
 		console.error("❌ Error connecting to MongoDB:", error.message);
 
 		// In production, you might want to retry instead of exiting
-		if (process.env.NODE_ENV === "production") {
+		if (isProduction()) {
 			console.log("⏳ Retrying connection in 5 seconds...");
 			setTimeout(connectDB, 5000);
 		} else {

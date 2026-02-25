@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { VERIFICATION } from "../config/constants.config";
 
 const verificationSchema = new mongoose.Schema(
 	{
@@ -25,10 +26,10 @@ const verificationSchema = new mongoose.Schema(
 			type: String,
 			enum: {
 				values: [
-					"EMAIL_VERIFICATION",
-					"SMS_VERIFICATION",
-					"PASSWORD_RESET",
-					"TWO_FACTOR",
+					VERIFICATION.TYPES.EMAIL_VERIFICATION,
+					VERIFICATION.TYPES.SMS_VERIFICATION,
+					VERIFICATION.TYPES.PASSWORD_RESET,
+					VERIFICATION.TYPES.TWO_FACTOR,
 				],
 				message: "Invalid verification type",
 			},

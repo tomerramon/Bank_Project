@@ -30,6 +30,8 @@ import {
 	validateSMSLength,
 	formatPhoneE164,
 } from "../config/sms-templates.config.js";
+import { TRANSACTION } from "../config/constants.config.js";
+import { ExternalServiceError } from "../utils/errors.util.js";
 
 // ============================================
 // TWILIO CLIENT SETUP
@@ -135,16 +137,22 @@ async function sendSMS(to, message) {
 
 		// Handle specific Twilio errors
 		if (error.code === 21211) {
-			throw new Error("Invalid phone number format");
+			throw new ExternalServiceError(
+				"Twilio",
+				"Invalid phone number format",
+			);
 		} else if (error.code === 21608) {
-			throw new Error(
-				"Unverified phone number (Twilio trial account limitation)",
+			throw new ExternalServiceError(
+				"Twilio",
+				"Unverified phone number (trial account limitation)",
 			);
 		} else if (error.code === 21610) {
-			throw new Error("Phone number is blocked or unsubscribed");
+			throw new ExternalServiceError(
+				"Twilio",
+				"Phone number is blocked or unsubscribed",
+			);
 		}
-
-		throw new Error(`SMS sending failed: ${error.message}`);
+		throw new ExternalServiceError("Twilio", error.message);
 	}
 }
 
@@ -205,7 +213,9 @@ export async function sendTransactionSMS(phone, transaction) {
 	};
 
 	const template =
-		direction === "T_IN" ? TRANSACTION_RECEIVED_SMS : TRANSACTION_SENT_SMS;
+		direction === TRANSACTION.DIRECTION.IN
+			? TRANSACTION_RECEIVED_SMS
+			: TRANSACTION_SENT_SMS;
 
 	return await sendSMS(phone, template.getMessage(data));
 }
@@ -393,41 +403,6 @@ export async function sendTestSMS(toPhone) {
 		toPhone,
 		`Test SMS from ${process.env.APP_NAME || "Bank App"}. If you received this, your SMS configuration is working! ✅`,
 	);
-}
-
-/**
- * Check phone number status with Twilio Lookup API
- * (Requires Lookup API to be enabled in Twilio)
- *
- * @param {string} phoneNumber - Phone number to check
- * @returns {Promise<Object>} - Phone number info
- */
-export async function lookupPhoneNumber(phoneNumber) {
-	const client = getTwilioClient();
-
-	if (!client) {
-		return {
-			valid: true,
-			formatted: formatPhoneE164(phoneNumber),
-			carrier: "unknown",
-		};
-	}
-
-	try {
-		const result = await client.lookups.v1
-			.phoneNumbers(formatPhoneE164(phoneNumber))
-			.fetch();
-
-		return {
-			valid: true,
-			formatted: result.phoneNumber,
-			nationalFormat: result.nationalFormat,
-			carrier: result.carrier?.name || "unknown",
-		};
-	} catch (error) {
-		console.error("Phone lookup failed:", error.message);
-		return { valid: false, error: error.message };
-	}
 }
 
 /**

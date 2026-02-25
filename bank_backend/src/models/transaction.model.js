@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { TRANSACTION } from "../config/constants.config";
 
 const transactionSchema = new mongoose.Schema(
 	{
@@ -26,7 +27,7 @@ const transactionSchema = new mongoose.Schema(
 		direction: {
 			type: String,
 			enum: {
-				values: ["T_IN", "T_OUT"],
+				values: [TRANSACTION.DIRECTION.IN, TRANSACTION.DIRECTION.OUT],
 				message: "Direction must be either T_IN or T_OUT",
 			},
 			required: [true, "Direction is required"],

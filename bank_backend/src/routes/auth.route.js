@@ -56,6 +56,7 @@ import {
 	testNotificationsController,
 } from "../controllers/auth.controller.js";
 import { authRateLimit } from "../middlewares/rateLimit.middleware.js";
+import { isDevelopment } from "../config/constants.config.js";
 
 const router = Router();
 
@@ -189,7 +190,7 @@ router.post("/logout", authMiddleware, logoutController);
  * @query   email, phone
  * @returns { success, results }
  */
-if (process.env.NODE_ENV === "development") {
+if (isDevelopment()) {
 	router.get("/test-notifications", testNotificationsController);
 }
 

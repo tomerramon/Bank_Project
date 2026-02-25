@@ -45,8 +45,18 @@ import {
 	formatErrorResponse,
 	formatSuccessResponse,
 } from "../utils/response.util.js";
-import { ValidationError, UserNotFoundError } from "../utils/errors.util.js";
-import { AUTH } from "../config/constants.config.js";
+import {
+	ValidationError,
+	UserNotFoundError,
+	InvalidTokenError,
+	ForbiddenError,
+} from "../utils/errors.util.js";
+import {
+	AUTH,
+	isDevelopment,
+	SUCCESS_MESSAGES,
+	VERIFICATION,
+} from "../config/constants.config.js";
 
 // ============================================
 //  SIGNUP CONTROLLER
@@ -63,17 +73,20 @@ export async function signupController(req, res) {
 		validateSignupInputs({ email, password, phone });
 
 		const user = await createUser(email, password, phone);
-		const otp = await generateOTP(user.id, "EMAIL_VERIFICATION");
+		const otp = await generateOTP(
+			user.id,
+			VERIFICATION.TYPES.EMAIL_VERIFICATION,
+		);
 
 		// Pass full user object to notification service
 		sendOTPNotification(user, otp);
 
 		res.status(201).json(
 			formatSuccessResponse(
-				"User created successfully. Check your email and phone for verification code.",
+				`${SUCCESS_MESSAGES.USER_CREATED}. Check your email and phone for verification code.`,
 				{
 					userId: user.id,
-					...(process.env.NODE_ENV === "development" && {
+					...(isDevelopment() && {
 						devOTP: otp,
 					}),
 				},
@@ -126,9 +139,7 @@ export async function verifyOTPController(req, res) {
 		sendWelcomeNotification(user, userName);
 
 		res.status(200).json(
-			formatSuccessResponse(
-				"Email verified successfully. You can now log in.",
-			),
+			formatSuccessResponse(SUCCESS_MESSAGES.ACCOUNT_VERIFIED),
 		);
 	} catch (error) {
 		const statusCode = error.statusCode || 400;
@@ -153,16 +164,8 @@ export async function resendOTPController(req, res) {
 		}
 
 		const canRequest = await canRequestOTP(userId, type);
-		if (!canRequest) {
-			return res
-				.status(429)
-				.json(
-					formatErrorResponse(
-						new Error(
-							"Too many OTP requests. Please wait before requesting again.",
-						),
-					),
-				);
+		if (canRequest !== null) {
+			return res.status(429).json(formatErrorResponse(canRequest));
 		}
 
 		const otp = await generateOTP(userId, type);
@@ -176,7 +179,7 @@ export async function resendOTPController(req, res) {
 
 		res.status(200).json(
 			formatSuccessResponse("OTP resent successfully", {
-				...(process.env.NODE_ENV === "development" && { devOTP: otp }),
+				...(isDevelopment() && { devOTP: otp }),
 			}),
 		);
 	} catch (error) {
@@ -205,7 +208,7 @@ export async function loginController(req, res) {
 		setRefreshTokenCookie(res, result.refreshToken);
 
 		res.status(200).json(
-			formatSuccessResponse("Login successful", {
+			formatSuccessResponse(SUCCESS_MESSAGES.LOGIN_SUCCESS, {
 				token: result.token,
 				user: result.user,
 			}),
@@ -234,7 +237,9 @@ export async function refreshTokenController(req, res) {
 			return res
 				.status(401)
 				.json(
-					formatErrorResponse(new Error("Refresh token is missing")),
+					formatErrorResponse(
+						new InvalidTokenError("Refresh token is missing"),
+					),
 				);
 		}
 
@@ -273,11 +278,15 @@ export async function logoutController(req, res) {
 
 		clearRefreshTokenCookie(res);
 
-		res.status(200).json(formatSuccessResponse("Logged out successfully"));
+		res.status(200).json(
+			formatSuccessResponse(SUCCESS_MESSAGES.LOGOUT_SUCCESS),
+		);
 	} catch (error) {
 		// Even if invalidation fails, clear cookie and return success
 		res.clearCookie("refreshToken");
-		res.status(200).json(formatSuccessResponse("Logged out successfully"));
+		res.status(200).json(
+			formatSuccessResponse(SUCCESS_MESSAGES.LOGOUT_SUCCESS),
+		);
 	}
 }
 
@@ -313,7 +322,11 @@ export async function forgotPasswordController(req, res) {
 				);
 		}
 
-		const otp = await generateOTP(user._id, "PASSWORD_RESET", 10);
+		const otp = await generateOTP(
+			user._id,
+			VERIFICATION.TYPES.PASSWORD_RESET,
+			10,
+		);
 
 		// Pass full user object
 		sendPasswordResetNotification(user, otp);
@@ -322,7 +335,7 @@ export async function forgotPasswordController(req, res) {
 			formatSuccessResponse(
 				"If that email exists, a reset code has been sent to your email and phone.",
 				{
-					...(process.env.NODE_ENV === "development" && {
+					...(isDevelopment() && {
 						devOTP: otp,
 					}),
 				},
@@ -374,7 +387,11 @@ export async function resetPasswordController(req, res) {
 			throw new UserNotFoundError();
 		}
 
-		const isValid = await verifyOTP(user._id, otp, "PASSWORD_RESET");
+		const isValid = await verifyOTP(
+			user._id,
+			otp,
+			VERIFICATION.TYPES.PASSWORD_RESET,
+		);
 		if (!isValid) {
 			return res
 				.status(400)
@@ -491,7 +508,7 @@ export async function testNotificationsController(req, res) {
 			.status(403)
 			.json(
 				formatErrorResponse(
-					new Error(
+					new ForbiddenError(
 						"This endpoint is only available in development mode",
 					),
 				),

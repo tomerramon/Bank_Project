@@ -16,6 +16,7 @@ import {
 	PhoneExistsError,
 	ValidationError,
 	UserNotFoundError,
+	ConflictError,
 } from "../utils/errors.util.js";
 import { sendLowBalanceNotification } from "./notification.service.js";
 import {
@@ -96,7 +97,7 @@ export async function createUser(email, password, phone) {
 			const field = Object.keys(error.keyPattern)[0];
 			if (field === "email") throw new EmailExistsError();
 			if (field === "phone") throw new PhoneExistsError();
-			throw new Error(`${field} is already in use`);
+			throw new ConflictError(`${field} is already in use`);
 		}
 
 		if (error.name === "ValidationError") {

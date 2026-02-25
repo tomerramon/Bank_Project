@@ -2,14 +2,9 @@ import jwt from "jsonwebtoken";
 import { AUTH } from "../config/constants.config.js";
 
 export function generateAccessToken(user) {
-	return jwt.sign(
-		{
-			id: user.id,
-			email: user.email,
-		},
-		process.env.JWT_ACCESS_SECRET,
-		{ expiresIn: AUTH.ACCESS_TOKEN_EXPIRY },
-	);
+	return jwt.sign(sanitizeUserForToken(user), process.env.JWT_ACCESS_SECRET, {
+		expiresIn: AUTH.ACCESS_TOKEN_EXPIRY,
+	});
 }
 
 export function generateRefreshToken(user) {

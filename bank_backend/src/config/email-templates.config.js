@@ -5,7 +5,7 @@
  * This makes it easy to update email content without touching the service code.
  */
 
-import { VERIFICATION } from "./constants.config.js";
+import { TRANSACTION, VERIFICATION } from "./constants.config.js";
 
 /**
  * Common email styles (reused across templates)
@@ -238,14 +238,14 @@ ${data.appName || "Bank App"} Team
  */
 export const TRANSACTION_EMAIL = {
 	getSubject: (data) => {
-		const isIncoming = data.direction === "T_IN";
+		const isIncoming = data.direction === TRANSACTION.DIRECTION.IN;
 		return isIncoming
 			? `You received $${data.amount.toFixed(2)}`
 			: `You sent $${data.amount.toFixed(2)}`;
 	},
 
 	getText: (data) => {
-		const isIncoming = data.direction === "T_IN";
+		const isIncoming = data.direction === TRANSACTION.DIRECTION.IN;
 		return `
 Transaction Notification
 
@@ -263,7 +263,7 @@ ${data.appName || "Bank App"} Team
 	},
 
 	getHTML: (data) => {
-		const isIncoming = data.direction === "T_IN";
+		const isIncoming = data.direction === TRANSACTION.DIRECTION.IN;
 		const headerColor = isIncoming ? "#059669" : "#dc2626";
 		const icon = isIncoming ? "💰" : "💸";
 		const title = isIncoming ? "Money Received" : "Money Sent";
@@ -811,16 +811,3 @@ export function getAppDefaults() {
 		expiryMinutes: VERIFICATION.OTP_EXPIRY_MINUTES || 10,
 	};
 }
-
-export default {
-	OTP_EMAIL,
-	WELCOME_EMAIL,
-	TRANSACTION_EMAIL,
-	PASSWORD_RESET_EMAIL,
-	ACCOUNT_LOCKED_EMAIL,
-	TRANSACTION_FAILED_EMAIL,
-	ACCOUNT_VERIFIED_EMAIL,
-	LOW_BALANCE_EMAIL,
-	PASSWORD_CHANGED_EMAIL,
-	getAppDefaults,
-};

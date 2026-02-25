@@ -44,7 +44,6 @@ export async function AuthenticateUser(email, password) {
 
 	// Security: Use same error message for "user not found" and "wrong password"
 	// This prevents attackers from discovering which emails are registered
-	// const authError = new Error("Authentication failed: Invalid email or password.");
 	const authError = new AuthenticationError();
 
 	if (!user) {
@@ -72,7 +71,7 @@ export async function AuthenticateUser(email, password) {
 		}
 		if (user.accountLockedUntil && user.accountLockedUntil > new Date()) {
 			throw new AccountLockedError(
-				Math.ceil(user.accountLockedUntil - Date.now() / 6000),
+				Math.ceil((user.accountLockedUntil - Date.now()) / 6000),
 			);
 		}
 
@@ -140,7 +139,7 @@ export async function changePassword(userId, oldPassword, newPassword) {
 		user.passwordHash,
 	);
 	if (!isOldPasswordMatch) {
-		throw new Error("Current password is incorrect");
+		throw new AuthenticationError("Current password is incorrect");
 	}
 
 	// Validate new password strength

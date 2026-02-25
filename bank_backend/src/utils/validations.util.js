@@ -11,6 +11,8 @@ import {
 	UnverifiedAccountError,
 	InactiveAccountError,
 	AccountLockedError,
+	SelfTransferError,
+	MissingFieldError,
 } from "./errors.util.js";
 import {
 	VALIDATION,
@@ -185,8 +187,8 @@ export function validateSignupInputs(data) {
 export function validateLoginInputs(data) {
 	const { email, password } = data;
 
-	if (!email) throw new ValidationError("Email is required");
-	if (!password) throw new ValidationError("Password is required");
+	if (!email) throw new MissingFieldError("email");
+	if (!password) throw new MissingFieldError("password");
 
 	validateEmail(email);
 
@@ -197,10 +199,10 @@ export function validateTransferInputs(data) {
 	const { toEmail, amount } = data;
 
 	if (!toEmail) {
-		throw new ValidationError("Receiver email is required");
+		throw new MissingFieldError("Receiver email");
 	}
 	if (amount === undefined || amount === null) {
-		throw new ValidationError("Amount is required");
+		throw new MissingFieldError("Amount");
 	}
 
 	validateEmail(toEmail);
@@ -273,8 +275,16 @@ export function requireDifferentUsers(userId1, userId2) {
 	const id2 = typeof userId2 === "string" ? userId2 : userId2.toString();
 
 	if (id1 === id2) {
-		throw new ValidationError(
-			"Cannot perform this operation with yourself",
-		);
+		throw new SelfTransferError();
 	}
+}
+
+// ==========================================
+// SANITIZATION
+// ==========================================
+export function sanitizeUserForToken(user) {
+	return {
+		id: user._id || user.id,
+		email: user.email,
+	};
 }

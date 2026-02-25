@@ -11,7 +11,7 @@ import Transactions from "../models/transaction.model.js";
 import Verifications from "../models/verification.model.js";
 import { validateUserForOperation } from "./validations.util.js";
 import mongoose from "mongoose";
-import { AUTH } from "../config/constants.config.js";
+import { AUTH, PAGINATION, TRANSACTION } from "../config/constants.config.js";
 
 // ==========================================
 // USER QUERIES
@@ -40,6 +40,12 @@ export async function findUserByEmail(email, session = null) {
 	if (session) query.session(session);
 
 	return await query;
+}
+
+export async function findUserByPhone(phone) {
+	return await Users.findOne({ phone }).select(
+		"email balance isVerified accountStatus phone profile notificationPreferences createdAt",
+	);
 }
 
 export async function findUserByEmailWithPassword(email) {
@@ -198,14 +204,14 @@ export async function createTransactionPair(
 				userId: fromUserId,
 				peerUserId: toUserId,
 				amount: amountInCents,
-				direction: "T_OUT",
+				direction: TRANSACTION.DIRECTION.OUT,
 				reference,
 			},
 			{
 				userId: toUserId,
 				peerUserId: fromUserId,
 				amount: amountInCents,
-				direction: "T_IN",
+				direction: TRANSACTION.DIRECTION.IN,
 				reference,
 			},
 		],
@@ -215,8 +221,8 @@ export async function createTransactionPair(
 
 export async function findTransactionsByUser(userId, options = {}) {
 	const {
-		page = 1,
-		limit = 20,
+		page = PAGINATION.DEFAULT_PAGE,
+		limit = PAGINATION.DEFAULT_LIMIT,
 		direction = null,
 		startDate = null,
 		endDate = null,
@@ -330,12 +336,30 @@ export async function deleteExpiredOTP() {
 
 	return result.deletedCount;
 }
+
+export async function getOTPStatsQuery(userId = null) {
+	const match = userId ? { userId: new mongoose.Types.ObjectId(userId) } : {};
+
+	return await Verifications.aggregate([
+		{ $match: match },
+		{
+			$group: {
+				_id: { type: "$type", isUsed: "$isUsed" },
+				count: { $sum: 1 },
+				avgAttempts: { $avg: "$attempts" },
+			},
+		},
+	]);
+}
 // ==========================================
 // HELPER FUNCTIONS
 // ==========================================
 export function buildPaginationParams(query) {
-	const page = Math.max(1, parseInt(query.page) || 1);
-	const limit = Math.min(100, Math.max(1, parseInt(query.limit) || 20));
+	const page = Math.max(1, parseInt(query.page) || PAGINATION.DEFAULT_PAGE);
+	const limit = Math.min(
+		PAGINATION.MAX_LIMIT,
+		Math.max(1, parseInt(query.limit) || PAGINATION.DEFAULT_LIMIT),
+	);
 
 	return { page, limit };
 }

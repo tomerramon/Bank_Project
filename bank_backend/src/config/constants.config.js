@@ -33,7 +33,6 @@ export const AUTH = {
 
 	// Password requirements
 	PASSWORD_MIN_LENGTH: 8,
-	PASSWORD_REGEX: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
 	PASSWORD_REGEX_LOWER: /(?=.*[a-z])/,
 	PASSWORD_REGEX_UPPER: /(?=.*[A-Z])/,
 	PASSWORD_REGEX_NUMBER: /(?=.*\d)/,
@@ -230,10 +229,13 @@ export const ENVIRONMENT = {
 	TEST: "test",
 };
 
+export const APP = {
+	DEFAULT_COUNTRY_CODE: process.env.DEFAULT_COUNTRY_CODE || "972",
+};
+
 // ==========================================
 // HELPER FUNCTIONS
 // ==========================================
-
 /**
  * Generate random balance between min and max
  * @returns {number} - Balance in cents

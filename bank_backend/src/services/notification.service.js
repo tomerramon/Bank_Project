@@ -29,6 +29,7 @@ import {
 	sendLowBalanceSMS,
 	sendAccountLockedSMS,
 	sendLargeTransactionSMS,
+	sendAccountSuspendedSMS,
 } from "./sms.service.js";
 
 /**
@@ -55,11 +56,6 @@ async function sendAsync(fn, args, description) {
  * @returns {Promise<void>} - true if email notifications are enabled
  */
 function wantsEmail(user) {
-	// If user object has the method, use it
-	if (typeof user.wantsEmailNotifications === "function") {
-		return user.wantsEmailNotifications();
-	}
-	// Otherwise check the field directly (for plain objects from queries)
 	return user.notificationPreferences?.email !== false; // Default true
 }
 
@@ -70,11 +66,6 @@ function wantsEmail(user) {
  * @returns {Promise<void>} - true if SMS notifications are enabled
  */
 function wantsSMS(user) {
-	// If user object has the method, use it
-	if (typeof user.wantsSMSNotifications === "function") {
-		return user.wantsSMSNotifications();
-	}
-	// Otherwise check the field directly
 	return user.notificationPreferences?.sms === true;
 }
 
@@ -193,6 +184,16 @@ export async function sendAccountLockedNotification(
 			sendAccountLockedSMS,
 			[user.phone, unlockMinutes],
 			"Account locked SMS",
+		);
+	}
+}
+
+export async function sendAccountSuspendedNotification(user) {
+	if (wantsSMS(user)) {
+		sendAsync(
+			sendAccountSuspendedSMS,
+			[user.phone],
+			"Account suspended SMS",
 		);
 	}
 }

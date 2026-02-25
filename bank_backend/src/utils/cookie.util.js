@@ -5,6 +5,8 @@
  *
  */
 
+import { isProduction } from "../config/constants.config";
+
 /**
  * Set refresh token as HTTP-only cookie
  * More secure than localStorage
@@ -15,7 +17,7 @@
 export function setRefreshTokenCookie(res, refreshToken) {
 	res.cookie("refreshToken", refreshToken, {
 		httpOnly: true,
-		secure: process.env.NODE_ENV === "production",
+		secure: isProduction(),
 		sameSite: "strict",
 		maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 	});

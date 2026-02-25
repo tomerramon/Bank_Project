@@ -36,6 +36,7 @@ import {
 	sendLargeTransactionAlert,
 } from "./notification.service.js";
 import { checkLowBalance } from "./user.service.js";
+import { TRANSACTION } from "../config/constants.config.js";
 
 // ============================================
 // MONEY TRANSFER
@@ -138,14 +139,14 @@ export async function transferMoney(fromUserId, toEmail, amount) {
 
 		// Send notifications (async)
 		sendTransactionNotification(sender, {
-			direction: "T_OUT",
+			direction: TRANSACTION.DIRECTION.OUT,
 			amount,
 			peerEmail: receiver.email,
 			balance: senderBalance,
 		});
 
 		sendTransactionNotification(receiver, {
-			direction: "T_IN",
+			direction: TRANSACTION.DIRECTION.IN,
 			amount,
 			peerEmail: sender.email,
 			balance: receiverBalance,
@@ -153,8 +154,8 @@ export async function transferMoney(fromUserId, toEmail, amount) {
 
 		// Large transaction alerts (if >= $1000)
 		if (amount >= 1000) {
-			sendLargeTransactionAlert(sender, amount, "T_OUT");
-			sendLargeTransactionAlert(receiver, amount, "T_IN");
+			sendLargeTransactionAlert(sender, amount, TRANSACTION.DIRECTION.OUT);
+			sendLargeTransactionAlert(receiver, amount, TRANSACTION.DIRECTION.IN);
 		}
 
 		// Low balance check
@@ -172,12 +173,12 @@ export async function transferMoney(fromUserId, toEmail, amount) {
 			senderBalance,
 			senderTransaction: {
 				id: transactions[0]._id,
-				direction: "T_OUT",
+				direction: TRANSACTION.DIRECTION.OUT,
 				amount: -amount,
 			},
 			receiverTransaction: {
 				id: transactions[1]._id,
-				direction: "T_IN",
+				direction: TRANSACTION.DIRECTION.IN,
 				amount: amount,
 			},
 		};
@@ -207,7 +208,7 @@ export async function getUserTransactions(userId, options = {}) {
 		...t,
 		amountInDollars: centsToDollars(t.amount),
 		formattedAmount:
-			t.direction === "T_IN"
+			t.direction === TRANSACTION.DIRECTION.IN
 				? `+$${centsToDollars(t.amount).toFixed(2)}`
 				: `-$${centsToDollars(t.amount).toFixed(2)}`,
 	}));
@@ -229,7 +230,7 @@ export async function getRecentTransactions(userId, limit = 10) {
 		...t,
 		amountInDollars: centsToDollars(t.amount),
 		formattedAmount:
-			t.direction === "T_IN"
+			t.direction === TRANSACTION.DIRECTION.IN
 				? `+$${centsToDollars(t.amount).toFixed(2)}`
 				: `-$${centsToDollars(t.amount).toFixed(2)}`,
 	}));
@@ -254,7 +255,7 @@ export async function getTransactionByReference(reference) {
 		...t,
 		amountInDollars: centsToDollars(t.amount),
 		formattedAmount:
-			t.direction === "T_IN"
+			t.direction === TRANSACTION.DIRECTION.IN
 				? `+$${centsToDollars(t.amount).toFixed(2)}`
 				: `-$${centsToDollars(t.amount).toFixed(2)}`,
 	}));
@@ -299,12 +300,12 @@ export async function getTransactionStats(userId) {
 	};
 
 	stats.forEach((stat) => {
-		if (stat._id === "T_OUT") {
+		if (stat._id === TRANSACTION.DIRECTION.OUT) {
 			result.sent = {
 				count: stat.count,
 				total: centsToDollars(stat.totalAmount),
 			};
-		} else if (stat._id === "T_IN") {
+		} else if (stat._id === TRANSACTION.DIRECTION.IN) {
 			result.received = {
 				count: stat.count,
 				total: centsToDollars(stat.totalAmount),

@@ -128,6 +128,8 @@ const userSchema = new mongoose.Schema(
 				// Remove sensitive fields from JSON output
 				delete ret.passwordHash;
 				delete ret.refreshTokens;
+				delete ret.failedLoginAttempts;
+				delete ret.accountLockedUntil;
 				delete ret.__v;
 				return ret;
 			},

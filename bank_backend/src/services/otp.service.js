@@ -5,10 +5,12 @@ import {
 	deleteExistingOTPs,
 	deleteExpiredOTP,
 	findValidOTP,
+	getOTPStatsQuery,
 	incrementAttempts,
 	insertOTP,
 	markOTPAsUsed,
 } from "../utils/query.util.js";
+import { OTPLimitError, ValidationError } from "../utils/errors.util.js";
 
 /**
  * Generate a random OTP code
@@ -38,18 +40,18 @@ async function createOTP(userId, type, otpHash, expirationMinutes = 10) {
  */
 export async function generateOTP(
 	userId,
-	type = "EMAIL_VERIFICATION",
+	type = VERIFICATION.TYPES.EMAIL_VERIFICATION,
 	expirationMinutes = 10,
 ) {
 	// Validate type
 	const validTypes = [
-		"EMAIL_VERIFICATION",
-		"SMS_VERIFICATION",
-		"PASSWORD_RESET",
-		"TWO_FACTOR",
+		VERIFICATION.TYPES.EMAIL_VERIFICATION,
+		VERIFICATION.TYPES.SMS_VERIFICATION,
+		VERIFICATION.TYPES.PASSWORD_RESET,
+		VERIFICATION.TYPES.TWO_FACTOR,
 	];
 	if (!validTypes.includes(type)) {
-		throw new Error(
+		throw new ValidationError(
 			`Invalid verification type. Must be one of: ${validTypes.join(", ")}`,
 		);
 	}
@@ -77,7 +79,11 @@ export async function generateOTP(
  * @param {string} type - Verification type
  * @returns {Promise<boolean>} - true if OTP is valid
  */
-export async function verifyOTP(userId, otpCode, type = "EMAIL_VERIFICATION") {
+export async function verifyOTP(
+	userId,
+	otpCode,
+	type = VERIFICATION.TYPES.EMAIL_VERIFICATION,
+) {
 	// Find valid OTP for this user and type
 	const verification = await findValidOTP(userId, type);
 
@@ -117,9 +123,12 @@ export async function verifyOTP(userId, otpCode, type = "EMAIL_VERIFICATION") {
  *
  * @param {string} userId - User's ID
  * @param {string} type - Verification type
- * @returns {Promise<boolean>} - true if user can request OTP
+ * @returns {Promise<OTPLimitError|null>} - OTPLimitError if limit exceeded, otherwise null
  */
-export async function canRequestOTP(userId, type = "EMAIL_VERIFICATION") {
+export async function canRequestOTP(
+	userId,
+	type = VERIFICATION.TYPES.EMAIL_VERIFICATION,
+) {
 	const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 	const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
@@ -133,7 +142,7 @@ export async function canRequestOTP(userId, type = "EMAIL_VERIFICATION") {
 	// Max 3 requests per 10 minutes
 	if (recentRequests >= VERIFICATION.OTP_REQUEST_LIMIT_10MIN) {
 		console.log(`⚠️ User ${userId} exceeded 10-min OTP limit`);
-		return false;
+		return new OTPLimitError(10);
 	}
 
 	// Count OTP requests in last hour
@@ -146,10 +155,8 @@ export async function canRequestOTP(userId, type = "EMAIL_VERIFICATION") {
 	// Max 10 requests per hour
 	if (hourlyRequests >= VERIFICATION.OTP_REQUEST_LIMIT_1HOUR) {
 		console.log(`⚠️ User ${userId} exceeded 1-hour OTP limit`);
-		return false;
+		return new OTPLimitError(60);
 	}
-
-	return true;
 }
 
 /**
@@ -179,21 +186,6 @@ export async function invalidateAllOTPs(userId) {
  * @returns {Promise<Object>} - OTP statistics
  */
 export async function getOTPStats(userId = null) {
-	const match = userId ? { userId } : {};
-
-	const stats = await Verifications.aggregate([
-		{ $match: match },
-		{
-			$group: {
-				_id: {
-					type: "$type",
-					isUsed: "$isUsed",
-				},
-				count: { $sum: 1 },
-				avgAttempts: { $avg: "$attempts" },
-			},
-		},
-	]);
-
+	const stats = getOTPStatsQuery(userId);
 	return stats;
 }
