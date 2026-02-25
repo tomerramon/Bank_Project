@@ -31,7 +31,6 @@ import {
 	sendAccountVerifiedNotification,
 } from "../services/notification.service.js";
 import {
-	findUserByIdWithPassword,
 	findUserById,
 	findUserByEmail,
 	changeUserPassword,
