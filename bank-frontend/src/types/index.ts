@@ -159,9 +159,6 @@ export interface ThemeStore {
 // ==========================================
 // UTILITY TYPES
 // ==========================================
-
-export type RequestStatus = "idle" | "loading" | "success" | "error";
-
 export interface FormError {
 	field: string;
 	message: string;

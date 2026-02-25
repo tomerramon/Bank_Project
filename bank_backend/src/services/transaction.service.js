@@ -38,6 +38,22 @@ import {
 import { checkLowBalance } from "./user.service.js";
 import { TRANSACTION } from "../config/constants.config.js";
 
+/*
+ * Helper function to format transaction data for API responses.
+ * @param {Object} t - Transaction document from database
+ * @returns {Object} - Formatted transaction with amount in dollars and formatted string
+ */
+function formatTransaction(t) {
+	return {
+		...t,
+		amountInDollars: centsToDollars(t.amount),
+		formattedAmount:
+			t.direction === TRANSACTION.DIRECTION.IN
+				? `+$${centsToDollars(t.amount).toFixed(2)}`
+				: `-$${centsToDollars(t.amount).toFixed(2)}`,
+	};
+}
+
 // ============================================
 // MONEY TRANSFER
 // ============================================
@@ -154,8 +170,16 @@ export async function transferMoney(fromUserId, toEmail, amount) {
 
 		// Large transaction alerts (if >= $1000)
 		if (amount >= 1000) {
-			sendLargeTransactionAlert(sender, amount, TRANSACTION.DIRECTION.OUT);
-			sendLargeTransactionAlert(receiver, amount, TRANSACTION.DIRECTION.IN);
+			sendLargeTransactionAlert(
+				sender,
+				amount,
+				TRANSACTION.DIRECTION.OUT,
+			);
+			sendLargeTransactionAlert(
+				receiver,
+				amount,
+				TRANSACTION.DIRECTION.IN,
+			);
 		}
 
 		// Low balance check
@@ -204,14 +228,7 @@ export async function transferMoney(fromUserId, toEmail, amount) {
 export async function getUserTransactions(userId, options = {}) {
 	const result = await findTransactionsByUser(userId, options);
 
-	result.transactions = result.transactions.map((t) => ({
-		...t,
-		amountInDollars: centsToDollars(t.amount),
-		formattedAmount:
-			t.direction === TRANSACTION.DIRECTION.IN
-				? `+$${centsToDollars(t.amount).toFixed(2)}`
-				: `-$${centsToDollars(t.amount).toFixed(2)}`,
-	}));
+	result.transactions = result.transactions.map(formatTransaction);
 
 	return result;
 }
@@ -226,14 +243,7 @@ export async function getUserTransactions(userId, options = {}) {
 export async function getRecentTransactions(userId, limit = 10) {
 	const transactions = await findRecentTransactions(userId, limit);
 
-	return transactions.map((t) => ({
-		...t,
-		amountInDollars: centsToDollars(t.amount),
-		formattedAmount:
-			t.direction === TRANSACTION.DIRECTION.IN
-				? `+$${centsToDollars(t.amount).toFixed(2)}`
-				: `-$${centsToDollars(t.amount).toFixed(2)}`,
-	}));
+	return transactions.map(formatTransaction);
 }
 
 /**
@@ -251,14 +261,7 @@ export async function getTransactionByReference(reference) {
 		throw new NotFoundError("Transaction");
 	}
 
-	return transactions.map((t) => ({
-		...t,
-		amountInDollars: centsToDollars(t.amount),
-		formattedAmount:
-			t.direction === TRANSACTION.DIRECTION.IN
-				? `+$${centsToDollars(t.amount).toFixed(2)}`
-				: `-$${centsToDollars(t.amount).toFixed(2)}`,
-	}));
+	return transactions.map(formatTransaction);
 }
 
 // ============================================

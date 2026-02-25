@@ -55,28 +55,3 @@ export function CardContent({
 		</div>
 	);
 }
-
-interface CardFooterProps extends HTMLAttributes<HTMLDivElement> {
-	children: ReactNode;
-	ref?: Ref<HTMLDivElement>;
-}
-
-export function CardFooter({
-	children,
-	className,
-	ref,
-	...props
-}: CardFooterProps) {
-	return (
-		<div
-			ref={ref}
-			className={cn(
-				"mt-6 flex items-center justify-end gap-3 border-t border-gray-200 dark:border-gray-800 pt-4",
-				className,
-			)}
-			{...props}
-		>
-			{children}
-		</div>
-	);
-}
