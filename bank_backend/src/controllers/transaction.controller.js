@@ -19,6 +19,7 @@ import {
 	formatPaginatedResponse,
 } from "../utils/response.util.js";
 import { ForbiddenError } from "../utils/errors.util.js";
+import { SUCCESS_MESSAGES } from "../config/constants.config.js";
 
 /**
  * Transfer money to another user

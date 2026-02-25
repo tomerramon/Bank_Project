@@ -27,7 +27,7 @@ function generateOTPCode() {
 async function createOTP(userId, type, otpHash, expirationMinutes = 10) {
 	await deleteExistingOTPs(userId, type);
 	const expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
-	await insertOTP(userId, type, hashedOTP, expiresAt);
+	await insertOTP(userId, type, otpHash, expiresAt);
 }
 
 /**
@@ -157,6 +157,8 @@ export async function canRequestOTP(
 		console.log(`⚠️ User ${userId} exceeded 1-hour OTP limit`);
 		return new OTPLimitError(60);
 	}
+
+	return null; // explicitly return null when OK
 }
 
 /**

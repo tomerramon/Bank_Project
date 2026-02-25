@@ -11,6 +11,7 @@ import {
 	findUserByIdWithPassword,
 	incrementFailedLoginAttempts,
 	lockUserAccount,
+	removeAllRefreshTokens,
 	resetUserLoginAttempts,
 } from "../utils/query.util.js";
 import {
@@ -67,11 +68,11 @@ export async function AuthenticateUser(email, password) {
 		if (user.accountLockedUntil && user.accountLockedUntil < new Date()) {
 			await resetUserLoginAttempts(user._id);
 			await incrementFailedLoginAttempts(user._id);
-			return authError;
+			throw authError;
 		}
 		if (user.accountLockedUntil && user.accountLockedUntil > new Date()) {
 			throw new AccountLockedError(
-				Math.ceil((user.accountLockedUntil - Date.now()) / 6000),
+				Math.ceil((user.accountLockedUntil - Date.now()) / 60000),
 			);
 		}
 

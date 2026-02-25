@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { AUTH } from "../config/constants.config.js";
+import { sanitizeUserForToken } from "../utils/validations.util.js";
 
 export function generateAccessToken(user) {
 	return jwt.sign(sanitizeUserForToken(user), process.env.JWT_ACCESS_SECRET, {

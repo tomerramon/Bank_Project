@@ -53,9 +53,7 @@ export async function updateRefreshToken(oldRefreshToken) {
 	}
 
 	// Step 5: Remove old refresh token
-	user.refreshTokens = user.refreshTokens.filter(
-		(rt) => rt.token !== oldRefreshToken,
-	);
+	await removeRefreshToken(user._id, oldRefreshToken);
 
 	// Step 6: Generate new tokens
 	const newAccessToken = generateAccessToken(user);
@@ -63,8 +61,6 @@ export async function updateRefreshToken(oldRefreshToken) {
 
 	// Step 7: Store new refresh token
 	await addRefreshToken(user._id, newRefreshToken);
-
-	await user.save();
 
 	return {
 		token: newAccessToken,
