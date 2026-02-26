@@ -257,7 +257,6 @@ export async function findTransactionsByUser(userId, options = {}) {
 			limit,
 			total,
 			totalPages: Math.ceil(total / limit),
-			hasMore: skip + transactions.length < total, // what ois this and the 2 below
 			hasNextPage: page * limit < total,
 			hasPreviousPage: page > 1,
 		},

@@ -5,7 +5,6 @@ import { formatErrorResponse } from "../utils/response.util.js";
 export function authMiddleware(req, res, next) {
 	const authHeader = req.headers.authorization;
 	if (!authHeader) {
-		// return res.status(401).json({ message: "Missing token" });
 		return res
 			.status(401)
 			.json(formatErrorResponse(new InvalidTokenError("Missing token")));
