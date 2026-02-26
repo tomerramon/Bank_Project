@@ -8,6 +8,8 @@ import userRoutes from "./routes/user.route.js";
 import transactionRoutes from "./routes/transaction.route.js";
 import { generalRateLimit } from "./middlewares/rateLimit.middleware.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
+import { NotFoundError } from "./utils/errors.util.js";
+import { formatErrorResponse } from "./utils/response.util.js";
 
 const app = express();
 
@@ -42,10 +44,7 @@ app.use("/transactions", transactionRoutes);
 
 // 404 handler
 app.use((req, res) => {
-	res.status(404).json({
-		success: false,
-		message: "Route not found",
-	});
+	res.status(404).json(formatErrorResponse(new NotFoundError("Route")));
 });
 
 app.use(errorHandler);
