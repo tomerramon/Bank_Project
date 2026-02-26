@@ -23,6 +23,8 @@
  */
 
 import { RATE_LIMIT } from "../config/constants.config.js";
+import { RateLimitError } from "../utils/errors.util.js";
+import { formatErrorResponse } from "../utils/response.util.js";
 
 /**
  * Simple in-memory rate limiter
@@ -113,13 +115,17 @@ export function generalRateLimit(req, res, next) {
 	const ip = req.ip || req.connection.remoteAddress;
 
 	if (generalLimiter.isRateLimited(ip)) {
-		return res.status(429).json({
-			success: false,
-			message: "Too many requests. Please try again later.",
-			retryAfter: Math.ceil(RATE_LIMIT.GENERAL_WINDOW_MS / 1000),
-		});
+		return res
+			.status(429)
+			.json(
+				formatErrorResponse(
+					new RateLimitError(
+						"Too many requests. Please try again later.",
+						Math.ceil(RATE_LIMIT.GENERAL_WINDOW_MS / 1000),
+					),
+				),
+			);
 	}
-
 	next();
 }
 
@@ -133,14 +139,17 @@ export function authRateLimit(req, res, next) {
 	const ip = req.ip || req.connection.remoteAddress;
 
 	if (authLimiter.isRateLimited(ip)) {
-		return res.status(429).json({
-			success: false,
-			message:
-				"Too many authentication attempts. Please try again in 15 minutes.",
-			retryAfter: Math.ceil(RATE_LIMIT.AUTH_WINDOW_MS / 1000),
-		});
+		return res
+			.status(429)
+			.json(
+				formatErrorResponse(
+					new RateLimitError(
+						"Too many authentication attempts. Please try again in 15 minutes.",
+						Math.ceil(RATE_LIMIT.AUTH_WINDOW_MS / 1000),
+					),
+				),
+			);
 	}
-
 	next();
 }
 
@@ -154,13 +163,17 @@ export function transactionRateLimit(req, res, next) {
 	const ip = req.ip || req.connection.remoteAddress;
 
 	if (transactionLimiter.isRateLimited(ip)) {
-		return res.status(429).json({
-			success: false,
-			message: "Too many transaction requests. Please wait a moment.",
-			retryAfter: Math.ceil(RATE_LIMIT.TRANSACTION_WINDOW_MS / 1000),
-		});
+		return res
+			.status(429)
+			.json(
+				formatErrorResponse(
+					new RateLimitError(
+						"Too many transaction requests. Please wait a moment.",
+						Math.ceil(RATE_LIMIT.TRANSACTION_WINDOW_MS / 1000),
+					),
+				),
+			);
 	}
-
 	next();
 }
 
