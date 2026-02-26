@@ -1,3 +1,4 @@
+import { ACCOUNT_STATUS } from "../config/constants.config.js";
 import Users from "../models/user.model.js";
 import {
 	InactiveAccountError,
@@ -48,7 +49,7 @@ export async function updateRefreshToken(oldRefreshToken) {
 	}
 
 	// Step 4: Check account status
-	if (user.accountStatus !== "active") {
+	if (user.accountStatus !== ACCOUNT_STATUS.ACTIVE) {
 		throw new InactiveAccountError();
 	}
 

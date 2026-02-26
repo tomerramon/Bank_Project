@@ -52,6 +52,7 @@ import {
 } from "../utils/errors.util.js";
 import {
 	AUTH,
+	ERROR_MESSAGES,
 	isDevelopment,
 	SUCCESS_MESSAGES,
 	VERIFICATION,
@@ -177,7 +178,7 @@ export async function resendOTPController(req, res) {
 		sendOTPNotification(user, otp);
 
 		res.status(200).json(
-			formatSuccessResponse("OTP resent successfully", {
+			formatSuccessResponse(SUCCESS_MESSAGES.OTP_RESENT, {
 				...(isDevelopment() && { devOTP: otp }),
 			}),
 		);
@@ -248,7 +249,7 @@ export async function refreshTokenController(req, res) {
 		setRefreshTokenCookie(res, tokens.refreshToken);
 
 		res.status(200).json(
-			formatSuccessResponse("Token refreshed successfully", {
+			formatSuccessResponse(SUCCESS_MESSAGES.TOKEN_REFRESHED, {
 				token: tokens.token,
 			}),
 		);
@@ -316,7 +317,7 @@ export async function forgotPasswordController(req, res) {
 				.status(200)
 				.json(
 					formatSuccessResponse(
-						"If that email exists, a reset code has been sent.",
+						SUCCESS_MESSAGES.FORGOT_PASSWORD_SENT,
 					),
 				);
 		}
@@ -331,14 +332,11 @@ export async function forgotPasswordController(req, res) {
 		sendPasswordResetNotification(user, otp);
 
 		res.status(200).json(
-			formatSuccessResponse(
-				"If that email exists, a reset code has been sent to your email and phone.",
-				{
-					...(isDevelopment() && {
-						devOTP: otp,
-					}),
-				},
-			),
+			formatSuccessResponse(SUCCESS_MESSAGES.FORGOT_PASSWORD_SENT, {
+				...(isDevelopment() && {
+					devOTP: otp,
+				}),
+			}),
 		);
 	} catch (error) {
 		const statusCode = error.statusCode || 500;
@@ -372,9 +370,7 @@ export async function resetPasswordController(req, res) {
 		const { email, otp, newPassword } = req.body;
 
 		if (!email || !otp || !newPassword) {
-			throw new ValidationError(
-				"Email, OTP, and new password are required",
-			);
+			throw new ValidationError(ERROR_MESSAGES.REQUIRED_FIELD_MISSING);
 		}
 
 		validateEmail(email);
@@ -413,9 +409,7 @@ export async function resetPasswordController(req, res) {
 		sendPasswordChangedNotification(user, userName);
 
 		res.status(200).json(
-			formatSuccessResponse(
-				"Password reset successfully. Please log in with your new password.",
-			),
+			formatSuccessResponse(SUCCESS_MESSAGES.PASSWORD_RESET),
 		);
 	} catch (error) {
 		const statusCode = error.statusCode || 400;
@@ -469,9 +463,7 @@ export async function changePasswordController(req, res) {
 		clearRefreshTokenCookie(res);
 
 		res.status(200).json(
-			formatSuccessResponse(
-				"Password changed successfully. Please log in again.",
-			),
+			formatSuccessResponse(SUCCESS_MESSAGES.PASSWORD_CHANGED),
 		);
 	} catch (error) {
 		const statusCode = error.statusCode || 400;
@@ -507,9 +499,7 @@ export async function testNotificationsController(req, res) {
 			.status(403)
 			.json(
 				formatErrorResponse(
-					new ForbiddenError(
-						"This endpoint is only available in development mode",
-					),
+					new ForbiddenError(ERROR_MESSAGES.UNAUTHORIZED_ACCESS),
 				),
 			);
 	}

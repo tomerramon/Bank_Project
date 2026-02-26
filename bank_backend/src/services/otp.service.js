@@ -3,7 +3,6 @@ import Verifications from "../models/verification.model.js";
 import { AUTH, VERIFICATION } from "../config/constants.config.js";
 import {
 	deleteExistingOTPs,
-	deleteExpiredOTP,
 	findValidOTP,
 	getOTPStatsQuery,
 	incrementAttempts,
@@ -41,7 +40,7 @@ async function createOTP(userId, type, otpHash, expirationMinutes = 10) {
 export async function generateOTP(
 	userId,
 	type = VERIFICATION.TYPES.EMAIL_VERIFICATION,
-	expirationMinutes = 10,
+	expirationMinutes = VERIFICATION.OTP_EXPIRY_MINUTES,
 ) {
 	// Validate type
 	const validTypes = [
@@ -105,7 +104,7 @@ export async function verifyOTP(
 		// Increment failed attempts
 		await incrementAttempts(verification._id);
 		console.log(
-			`❌ Invalid OTP for user ${userId}. Attempts: ${verification.attempts + 1}/5`,
+			`❌ Invalid OTP for user ${userId}. Attempts: ${verification.attempts + 1}/${VERIFICATION.MAX_OTP_ATTEMPTS}`,
 		);
 		return false;
 	}

@@ -178,6 +178,12 @@ export const SUCCESS_MESSAGES = {
 	TRANSFER_SUCCESS: "Money transferred successfully",
 	OTP_SENT: "Verification code sent",
 	ACCOUNT_VERIFIED: "Account verified successfully",
+	OTP_RESENT: "OTP resent successfully",
+	TOKEN_REFRESHED: "Token refreshed successfully",
+	FORGOT_PASSWORD_SENT: "A reset code has been sent.",
+	PASSWORD_RESET:
+		"Password reset successfully. Please log in with your new password.",
+	PASSWORD_CHANGED: "Password changed successfully. Please log in again.",
 };
 
 // ==========================================
